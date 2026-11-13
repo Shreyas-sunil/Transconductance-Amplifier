@@ -1,0 +1,27 @@
+* Baseline TIA - Alsheikhjader 2020 Fig. 1 (passive Lf = 2.4 nH), PTM 90 nm BSIM4
+* LTspice: File > Open (All files) > this .net, then Run.
+* One analysis at a time: keep one of the lines below active, comment the others with ";".
+.include ptm90.lib
+.param vdd=1.0 cpd=50f cout=30f lf=2.4n vg3b=0.0
+.temp 35
+
+Vdd vdd 0 dc {vdd}
+Vg3b g3b 0 dc {vg3b}
+M2b n vdd vdd vdd pmos90 W=0.9u L=90n AD=0.18p AS=0.18p PD=2.2u PS=2.2u
+M1 n vdd in 0 nmos90 W=5u L=90n AD=1p AS=1p PD=10.4u PS=10.4u
+M2 in n 0 0 nmos90 W=5u L=90n AD=1p AS=1p PD=10.4u PS=10.4u
+M3 out n 0 0 nmos90 W=5u L=90n AD=1p AS=1p PD=10.4u PS=10.4u
+M3b out g3b vdd vdd pmos90 W=5u L=90n AD=1p AS=1p PD=10.4u PS=10.4u
+Lf out in {lf}
+Cpd in 0 {cpd}
+Cout out 0 {cout}
+Iin 0 in dc 0 ac 1
+
+.ac dec 40 10Meg 200G
+;.noise V(out) Iin dec 40 10Meg 200G
+;.op
+.meas AC zt0 FIND mag(V(out)) AT 100Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

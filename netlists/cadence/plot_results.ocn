@@ -1,0 +1,13 @@
+;; OCEAN: plot results of a Spectre run of the netlists in this folder.
+;; First run:  spectre proposed_tia.scs   (and/or baseline_tia.scs), then in the CIW or `ocean`:  load("plot_results.ocn")
+foreach( name '("baseline_tia" "proposed_tia")
+  when( isDir(strcat("./" name ".raw"))
+    openResults(strcat("./" name ".raw"))
+    selectResult('acZt)
+    newWindow()
+    plot(db20(v("out")) ?expr list(strcat(name " Zt (dBohm)")))
+    printf("%s: Zt(100 MHz) = %g dBohm, -3 dB bandwidth = %g Hz\n" name value(db20(v("out")) 1e8) bandwidth(v("out") 3 "low"))
+    selectResult('noiseIn)
+    newWindow()
+    plot(getData("in") ?expr list(strcat(name " input-referred noise (A/sqrt(Hz))")))
+  ))
