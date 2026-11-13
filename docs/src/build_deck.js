@@ -143,15 +143,16 @@ const THEME = { name: 'TIA', headFontFace: 'Cambria', bodyFontFace: 'Calibri',
   const hdr = ['Work', 'Process, supply', 'Gain (dBΩ)', 'Bandwidth (GHz)', 'Power (mW)', 'Inductor', 'Tunable'];
   const rows = [['Alsheikhjader 2020, as published', '90 nm, 1 V', '43.92', '5–15 (flat band)', 'n/r', 'spiral 2.4 nH', 'no'],
                 ['Same circuit, re-simulated here', '90 nm PTM, 1 V', N.BZt, `${N.BFlat} (±1 dB)`, N.BPow, 'spiral 2.4 nH', 'no'],
-                ['Zohoori et al. 2018', '90 nm, 1 V', '40.5', '7', '1.4', 'none', 'no'],
-                ['Alsheikhjader & Issa 2024', '45 nm, 1 V', '68.2', '2.5', 'n/r', 'active, local', 'no'],
-                ['Alyas & Alsheikhjader 2026', '45 nm, 1 V', '62.2', '1', 'n/r', 'active, local', 'not swept'],
-                ['Hwang et al. 2006', '0.18 µm', '52', '3.9–7.6', 'n/r', 'none', 'yes'],
+                ['Zohoori et al. 2018', '90 nm, 1 V', '40.5', '7', '1.4', 'active, load', 'no'],
+                ['Alsheikhjader & Issa 2024', '45 nm, 1 V', '68.2', '2.5', '0.56', 'active, local', 'no'],
+                ['Shaaban et al. 2025', '45 nm, 1 V', '30.6', '2.8', '1.63', 'shunt peaking', 'no'],
+                ['Hwang et al. 2006 (silicon)', '0.18 µm, 2 V', '52', '3.9–7.6', '34', 'none', 'yes'],
+                ['Chien et al. 2010 (silicon)', '0.18 µm, 1.8 V', '47.8', '6.2–10.5', '33.3', 'passive', 'yes'],
                 ['This work (simulated)', '90 nm PTM, 1 V', N.PZt, `${N.TuneMin}–${N.TuneMax}`, N.PPow, 'active, global', 'yes']];
   const cell = (t, o = {}) => ({ text: String(t), options: { fontSize: 13, color: C.text1, valign: 'middle', ...o } });
   s.addTable([hdr.map(h => cell(h, { bold: true, fill: { color: C.background2 } }))].concat(rows.map((r, i) => r.map(c => cell(c, i === rows.length - 1 ? { bold: true, color: C.accent1 } : {})))),
-    { x: 0.6, y: 1.6, w: 12.1, colW: [3.5, 1.9, 1.3, 1.9, 1.2, 1.4, 0.9], rowH: 0.5, border: { type: 'solid', pt: 0.5, color: 'C9CED8' }, objectName: 'comparison table' });
-  T(s, 'Figures for other works are as reported by their authors under their own conditions and should be checked against the originals. n/r: not reported.', { x: 0.6, y: 5.85, w: 12.1, h: 0.7, fontSize: 13, color: C.text2 });
+    { x: 0.6, y: 1.6, w: 12.1, colW: [3.5, 1.9, 1.3, 1.9, 1.2, 1.4, 0.9], rowH: 0.44, border: { type: 'solid', pt: 0.5, color: 'C9CED8' }, objectName: 'comparison table' });
+  T(s, 'Tunable TIAs already exist in silicon; what is new here is narrow: an active inductor as global feedback in a current-mirror TIA, with one voltage for both tuning and PVT trimming at 1 V. Other works: authors’ figures under their own conditions. n/r: not reported.', { x: 0.6, y: 5.75, w: 12.1, h: 0.9, fontSize: 13, color: C.text2 });
 
   s = pres.addSlide({ masterName: 'Dark', sectionTitle: 'Limits and next steps' });
   s.addText('Next: DC-cancellation loop, foundry kit, layout, silicon', { placeholder: 'title' });
