@@ -15,7 +15,7 @@
 \maketitle
 
 \begin{abstract}
-A current-mirror transimpedance amplifier (TIA) that uses a \SI{2.4}{nH} spiral inductor as global feedback is re-examined with a BSIM4 device model, and an inductorless replacement is proposed. Re-simulated as drawn with the 90\,nm Predictive Technology Model, the published circuit delivers \BZt\,dB$\Omega$ with an \BPk\,dB resonance peak at \BFpk\,GHz, because its bias leaves the common-gate device in triode. The proposed circuit keeps the common-gate input and the mirror, biases them as a flipped-voltage-follower stage, and closes the loop with a source follower whose gate is driven from the output through a MOS resistor controlled by one voltage, $V_{tune}$. The follower and its gate network form a lossy active inductor. In simulation at \SI{1}{V} the TIA reaches \PZt\,dB$\Omega$ and \PBW\,GHz with \PPk\,dB peaking, \PInFive\,pA/$\sqrt{\text{Hz}}$ input-referred noise at \SI{5}{GHz} and \PPow\,mW, for a \SI{50}{fF} photodiode and a \SI{30}{fF} load. $V_{tune}$ moves the $-3$\,dB bandwidth from \TuneMin\ to \TuneMax\,GHz with less than \SI{1}{dB} peaking and removes the peaking that process, voltage and temperature shifts introduce (from \PvtPkMax\,dB to at most \PvtPkTMax\,dB over fifteen conditions). Relative to the re-simulated baseline the gain is \GainImp\,dB higher, the noise density at \SI{5}{GHz} is \NoiseRatio\ times lower and the power is \PowSave\,\% lower, and the feedback element is estimated to be two orders of magnitude smaller than the spiral. The study also reports what the active inductor does not do: it does not raise the maximum bandwidth above that of plain follower feedback at light loads, and the input stage overloads at an average photocurrent of a few tens of microamperes.
+A current-mirror transimpedance amplifier (TIA) that uses a \SI{2.4}{nH} spiral inductor as global feedback is re-examined with a BSIM4 device model, and an inductorless replacement is proposed. Re-simulated as drawn with the 90\,nm Predictive Technology Model, the published circuit delivers \BZt\,dB$\Omega$ with an \BPk\,dB resonance at \BFpk\,GHz. A fitting study locates the discrepancy: with the stated \SI{2.4}{nH}, no combination of PMOS gate biases, spiral loss and photodiode and load capacitance comes closer to the published curve than \DgRmsBestL\,dB rms, and every such case resonates, whereas the same circuit with less than about \DgLfMax\,pH of feedback inductance and a bias of about \DgIdNoL\,\si{\micro A} per mirror branch matches it to \DgRmsNoL\,dB rms. The published response is therefore that of the topology without effective inductive feedback. For a fair reference, the baseline topology is also re-optimised under the constraints used for the new design. The proposed circuit keeps the common-gate input and the mirror, biases them as a flipped-voltage-follower stage, and closes the loop with a source follower whose gate is driven from the output through a MOS resistor controlled by one voltage, $V_{tune}$. In simulation at \SI{1}{V} it reaches \PZt\,dB$\Omega$ and \PBW\,GHz with \PPk\,dB peaking, \PInFive\,pA/$\sqrt{\text{Hz}}$ input-referred noise at \SI{5}{GHz} and \PPow\,mW, for a \SI{50}{fF} photodiode and a \SI{30}{fF} load. At the same gain the best re-optimised baseline reaches \RgBw\,GHz, so the proposed circuit gives \BwRatioGain\ times the bandwidth, but at higher power and noise density; at its own best operating point the re-optimised baseline reaches a similar gain-bandwidth product (\RbGbw\ against \PGbw\,T$\Omega$Hz) at a quarter of the power. $V_{tune}$ moves the bandwidth from \TuneMin\ to \TuneMax\,GHz with less than \SI{1}{dB} peaking and removes the peaking that process, voltage and temperature shifts introduce (from \PvtPkMax\,dB to at most \PvtPkTMax\,dB over fifteen conditions). Without further measures the input stage overloads at a few tens of microamperes of average photocurrent. A DC-cancellation loop that regulates the follower current, at a cost of \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise at \SI{5}{GHz}, keeps the bandwidth within \SI{10}{\percent} and the gain within \SI{1}{dB} up to \DcLimit\,\si{\micro A}.
 \end{abstract}
 
 \noindent\textbf{Keywords:} transimpedance amplifier; active inductor; current mirror; flipped voltage follower; optical receiver; bandwidth tuning; 90\,nm CMOS.
@@ -29,10 +29,11 @@ Alsheikhjader \cite{baseline} reported a 90\,nm, \SI{1}{V} current-mirror TIA in
 
 This paper asks two questions. First, how does the published circuit behave with a compact model that includes realistic threshold voltages, output conductance and parasitic capacitance? Second, can the spiral be replaced by an active inductor in the same output-to-input position at a \SI{1}{V} supply, and what is gained and lost? The contributions are:
 \begin{enumerate}
-\item A BSIM4 re-simulation of the baseline as drawn, with its operating point, a closed-form low-frequency gain, and a list of the differences from the published curves (Section~\ref{sec:baseline}).
+\item A BSIM4 re-simulation of the baseline as drawn, with its operating point and a closed-form low-frequency gain; a hypothesis-by-hypothesis fit that identifies which conditions can and cannot produce the published curve; and two re-optimised versions of the baseline topology that serve as a fair reference (Section~\ref{sec:baseline}).
 \item A \SI{1}{V} current-mirror TIA in which a single-transistor, voltage-tuned active inductor replaces the spiral as global feedback, with its bias and headroom budget and a small-signal model (Section~\ref{sec:proposed}).
 \item A simulated characterisation: gain, noise by device, loop gains, the tuning law, fifteen process, voltage and temperature conditions, a \McN-sample Monte Carlo run with and without trimming, and eye diagrams (Section~\ref{sec:results}).
-\item A cost account that separates what the tuning network does from what it does not, including the load range over which the inductive zero helps and the input overload limit (Section~\ref{sec:discussion}).
+\item A DC-cancellation loop that removes the input overload limit by regulating the follower current, with its loop gain, settling, noise cost, corners and mismatch (Section~\ref{sec:dcc}).
+\item A cost account that separates what the tuning network does from what it does not, including the load range over which the inductive zero helps (Section~\ref{sec:discussion}).
 \end{enumerate}
 All results are schematic-level simulations with a predictive model; no layout was extracted and no chip was fabricated.
 
@@ -75,7 +76,56 @@ Fig.~\ref{fig:baseline} compares the re-simulation with points digitised from Fi
 \label{fig:baseline}
 \end{figure}
 
-The published curve is higher (about \SI{157}{\ohm} in band), shows no resonance and reports lower noise. The simulator, device model, capacitances and bias used in \cite{baseline} are not available, so the cause cannot be established; the published transfer function has a zero at the origin, which also differs from its plotted response. What can be said is narrower: with a model that enforces the threshold voltage, the schematic as drawn does not bias $M_1$ as a common-gate amplifier, and its response is a resonant peak, not a flat band. The re-simulated circuit is used as the reference for the rest of this paper.
+The published curve is higher in band (about \SI{157}{\ohm}), falls monotonically from \SI{203}{\ohm} at \SI{1}{GHz}, shows no resonance and reports lower noise. Its own transfer function (Eq.~9 of \cite{baseline}) has a zero at the origin; with equal mirror transconductances it gives $|Z_T|\approx\omega L_f\approx\DgEqNine\,\Omega$ at \SI{1}{GHz}, not the plotted \SI{203}{\ohm}.
+
+\subsection{Why the published response cannot be reproduced}\label{sec:diag}
+The simulator, model, capacitances and bias used in \cite{baseline} are not available, so the cause was located by elimination. For each hypothesis the two unpublished quantities, $C_{PD}$ and $C_L$, were fitted to the twelve digitised points (Nelder-Mead, \SI{5}{fF} to \SI{2}{pF}), and the residual was taken as evidence for or against it (Fig.~\ref{fig:diag}).
+
+\begin{itemize}
+\item \emph{As drawn.} With the assumed \SI{50}{fF} and \SI{30}{fF} the error is \DgRmsDrawn\,dB rms; with both capacitances free it is \DgRmsFitDrawn\,dB.
+\item \emph{$V_{G,3b}=\SI{-1}{V}$, as labelled.} \DgRmsMOne\,dB. The extra current lowers the gain further.
+\item \emph{$M_{2b}$ gate grounded}, which would turn $M_{2b}$ on and give $M_1$ a bias current. \DgRmsMTwoB\,dB.
+\item \emph{A lossy spiral}, \SI{15}{\ohm} in series. \DgRmsLoss\,dB.
+\item \emph{All of the above free}: both PMOS gate biases, spiral loss up to \SI{110}{\ohm} and both capacitances. The best fit is \DgRmsBestL\,dB, at \DgRsBestL\,$\Omega$ of series loss, and the fitted curve still has a peak near \SI{25}{GHz} that the published curve lacks.
+\item \emph{Feedback inductance free.} The error falls steadily as $L_f$ is reduced and reaches \DgRmsNoL\,dB below about \DgLfMax\,pH (Fig.~\ref{fig:diag}b), with the $M_{3b}$ gate at \DgVgNoL\,V, which sets about \DgIdNoL\,\si{\micro A} in each mirror branch and \DgPwrNoL\,mW in total.
+\end{itemize}
+
+A bias sweep of both PMOS gates (\DgNScreen\ points) also shows that the resonance cannot be biased away: the smallest peaking found with the stated inductor is \DgPkMin\,dB. The reason is visible in Eq.~\eqref{eq:zt_base}. The low-frequency gain is set by $g_{m2}+g_{m3}$, and as $\omega L_f$ grows the feedback is removed, so the gain must rise before the capacitances roll it off. A monotonically falling response from \SI{203}{\ohm}, as published, requires the feedback reactance to remain negligible across the band, that is, the low-pass response of $1/(g_{m2}+g_{m3})$ loaded by the node capacitances.
+
+The evidence therefore points to two departures from the circuit as described: the \SI{2.4}{nH} inductor did not act as an inductor in the simulation that produced the published curve (a unit error or an inductor outside the signal path would have this effect), and the mirror was biased at about one fifth of the current that the drawn bias gives. Neither can be confirmed without the original simulation files. The conclusion that can be stated is that the published response is not a property of the circuit as drawn with a \SI{2.4}{nH} inductor.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_baseline_diagnosis}
+\caption{(a) Best fits to the published curve with the stated inductor (all biases, spiral loss and capacitances free) and with the feedback inductance free. (b) Best achievable rms error against $L_f$. (c) The baseline as drawn, the two re-optimised baselines and the proposed TIA under identical conditions.}
+\label{fig:diag}
+\end{figure}
+
+\subsection{A fair reference}\label{sec:fair}
+Comparing a new design with a circuit whose bias leaves its common-gate device in triode overstates the improvement. The baseline topology was therefore re-optimised with the differential-evolution search used for the proposed TIA (Section~\ref{sec:proposed}) under the same constraints: $C_{PD}=\SI{50}{fF}$, $C_L=\SI{30}{fF}$, at most \SI{1}{dB} peaking and at most \SI{1.2}{mW}. The free parameters were the five widths, both PMOS gate biases (the $M_{2b}$ gate given its own bias), $L_f$ from 0.2 to \SI{6}{nH}, and a series loss up to \SI{60}{\ohm} to represent the spiral's quality factor. Two objectives were used: the largest gain-bandwidth product, and the largest bandwidth at a gain no lower than that of the proposed TIA. Table~\ref{tab:reopt} and Fig.~\ref{fig:diag}(c) give the results.
+
+\begin{table}[t]
+\centering
+\caption{Baseline topology as drawn and re-optimised, against the proposed TIA, all at $C_{PD}=\SI{50}{fF}$, $C_L=\SI{30}{fF}$, \SI{1}{V}.}
+\label{tab:reopt}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+ & As drawn & Re-opt.\ (max GBW) & Re-opt.\ (gain) & Proposed \\
+\midrule
+Gain (dB$\Omega$) & \BZt & \RbZt & \RgZt & \PZt \\
+$-3$\,dB bandwidth (GHz) & resonant & \RbBw & \RgBw & \PBW \\
+Peaking (dB) & \BPk & \RbPk & \RgPk & \PPk \\
+Power (mW) & \BPow & \RbPow & \RgPow & \PPow \\
+Noise at \SI{5}{GHz} (pA/$\sqrt{\text{Hz}}$) & \BInFive & \RbInFive & \RgInFive & \PInFive \\
+GBW (T$\Omega$Hz) & -- & \RbGbw & \RgGbw & \PGbw \\
+GBW / power ($\Omega$GHz/mW) & -- & \RbFom & \RgFom & \PFomP \\
+Feedback element & \SI{2.4}{nH} & \RbLf\,nH, \RbRs\,$\Omega$ & \RgLf\,nH, \RgRs\,$\Omega$ & active, tunable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three points follow. First, the baseline topology is better than its as-drawn form suggests: at its best gain-bandwidth point it reaches \RbGbw\,T$\Omega$Hz at \RbPow\,mW, slightly above the proposed TIA's \PGbw\,T$\Omega$Hz and with about four times the gain-bandwidth per milliwatt. Second, its gain is tied to its bias: the low-frequency gain is $1/(g_{m2}+g_{m3})$, so a higher gain needs smaller transconductances and the bandwidth falls with them. At the proposed TIA's gain the best it reaches is \RgBw\,GHz, a factor of \BwRatioGain\ below the proposed circuit, and more power does not help because it would raise $g_m$. Third, the optimiser chose a lossy, de-$Q$'d inductor in both cases, so neither re-optimised baseline uses the high-$Q$ spiral the original design assumed. The comparisons with the as-drawn circuit in the rest of the paper describe the circuit as published; the comparison that bears on design choice is the one in Table~\ref{tab:reopt}. In that comparison the proposed TIA buys bandwidth at high gain, inductorless feedback and tunability with power and noise density.
 
 \section{Proposed circuit}\label{sec:proposed}
 \subsection{Topology and bias}
@@ -263,7 +313,7 @@ Fig.~\ref{fig:load}(a) and Table~\ref{tab:load} compare the active-inductor netw
 
 Fig.~\ref{fig:load}(b) shows the effect of the photodiode capacitance. With a fixed setting the peaking grows with $C_{PD}$; lowering $V_{tune}$ brings it back below \SI{1}{dB} up to \SI{200}{fF}, at a bandwidth of about \SI{7.4}{GHz}.
 
-Fig.~\ref{fig:load}(c) shows the small-signal gain against a DC input current. The follower $M_f$ carries \IF\,\si{\micro A}, and photocurrent sourced into the input displaces it. The gain rises by \OvA\,dB at \SI{25}{\micro A} and \OvB\,dB at \SI{50}{\micro A}, where the bandwidth has fallen to \OvBwB\,GHz, and the feedback is lost near \SI{100}{\micro A}, where $M_f$ is starved. The baseline gain changes by less than \SI{1.3}{dB} up to \SI{1}{mA}.
+Fig.~\ref{fig:load}(c) shows the small-signal gain against a DC input current. The follower $M_f$ carries \IF\,\si{\micro A}, and photocurrent sourced into the input displaces it. The gain rises by \OvA\,dB at \SI{25}{\micro A} and \OvB\,dB at \SI{50}{\micro A}, where the bandwidth has fallen to \OvBwB\,GHz, and the feedback is lost near \SI{100}{\micro A}, where $M_f$ is starved. The baseline gain changes by less than \SI{1.3}{dB} up to \SI{1}{mA}. Section~\ref{sec:dcc} removes this limit.
 
 \begin{figure}[t]
 \centering
@@ -285,6 +335,38 @@ $C_L$ (fF) & Plain follower & AI, $V_{tune}=\VtNom$\,V & Best $V_{tune}$ (V) & A
 \end{tabular}
 \end{table}
 
+\section{DC-cancellation loop}\label{sec:dcc}
+\subsection{What fails and what to regulate}
+At the input node, $I(M_f)+I(M_1)+I_{PD}=I(M_2)$, and $I(M_2)$ is fixed by $M_{3b}$ through the mirror. Average photocurrent $I_{PD}$ is therefore taken almost entirely from the follower until $M_f$ cuts off. The quantity to protect is $I(M_f)$, and it is visible as $V_{GS}(M_f)=V_{OUT}-V_{IN}$ because $M_t$ carries no DC current. A conventional loop that holds $V_{OUT}$ at a fixed reference does not work here: across the fifteen conditions of Table~\ref{tab:pvt} the dark output level moves from 0.62 to \SI{0.70}{V}, so a fixed reference would either leave a large standing cancellation current or engage too late.
+
+\subsection{Circuit}
+Fig.~\ref{fig:schemdcc} shows the loop. A replica follower $M_r$, half the width of $M_f$ and biased at $I_{th}/2$ from the bias generator, produces $V_R=V_{OUT}-V_{GS}(I_{th})$. A five-transistor OTA with a PMOS input pair (the inputs sit near \SI{0.27}{V}) compares $V_R$ with $V_{IN}$ and integrates the difference on $C_{int}=\SI{2}{pF}$. Its output drives $M_{dc}$ (\SI{6}{\micro m}/\SI{180}{nm}), which sinks current from the input. When $I(M_f)$ falls below $I_{th}$, $V_{OUT}-V_{IN}$ falls below $V_{GS}(I_{th})$, $V_R$ falls below $V_{IN}$, the OTA output rises and $M_{dc}$ removes the excess photocurrent. Both inputs are taken through \SI{100}{k\ohm}/\SI{0.2}{pF} taps, so the signal path sees only the drain of $M_{dc}$ and two high-value resistors. The OTA output stays near ground when $M_{dc}$ should be off, which a PMOS pair allows and an NMOS pair at this common-mode level does not.
+
+The threshold $I_{th}$ is set at about \SI{105}{\micro A}, slightly above the nominal dark follower current of \IF\,\si{\micro A}. A first version with $I_{th}$ below the dark current, so that the loop stayed off in the dark, failed in Monte Carlo: the dark value of $I(M_f)$ is the difference of two larger currents, its standard deviation is \DcMcImfDarkStd\,\si{\micro A}, and samples with a low dark current were left with a held current far below nominal. With the threshold above the dark value the loop is engaged at all times and sinks \DcIdccDark\,\si{\micro A} in the dark. Mismatch between $M_r$ and $M_f$ and in the OTA still spreads the held current (standard deviation \DcMcImfStd\,\si{\micro A} at \SI{300}{\micro A}), but around a value high enough that the low tail no longer collapses the bandwidth. $V_{tune}$ is re-centred from \VtNom\ to \SI{0.26}{V} because the follower now runs at \DcImfDark\ rather than \IF\,\si{\micro A}. The loop adds ten transistors, two resistors and \SI{2.4}{pF} of capacitance (about \SI{240}{\micro m^2} as MOS capacitors at an assumed \SI{10}{fF/\micro m^2}), and \DcPowAdd\,\si{\micro W}, for \DcPow\,mW in total.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/schem_dcc}
+\caption{DC-cancellation loop. $V_{OUT}$ and $V_{IN}$ are the nodes of Fig.~\ref{fig:schem}(b); $I_{th}/2$ is mirrored from the bias generator.}
+\label{fig:schemdcc}
+\end{figure}
+
+\subsection{Results}
+Fig.~\ref{fig:dcc}(a) and (b) show the effect. Without the loop the gain changes by more than \SI{1}{dB} beyond \PrLimit\,\si{\micro A} and the bandwidth falls to \PrBwFifty\,GHz at \SI{50}{\micro A} and \PrBwHundred\,GHz at \SI{100}{\micro A}. With the loop the follower current stays near \SI{105}{\micro A}, $M_{dc}$ carries the photocurrent, and the bandwidth stays within \SI{10}{\percent} and the gain within \SI{1}{dB} of their dark values up to \DcLimit\,\si{\micro A}; at \SI{300}{\micro A} the bandwidth is \DcBwThree\,GHz and at \SI{500}{\micro A} it is \DcBwFive\,GHz. The range ends where the OTA output reaches its upper limit and $M_{dc}$ can sink no more. In the dark the loop costs \SI{0.5}{dB} of gain (\DcZtDark\ against \PZt\,dB$\Omega$) and gives \DcBwDark\,GHz.
+
+The loop introduces a low-frequency corner (Fig.~\ref{fig:dcc}d) of \DcFloDark\,kHz in the dark, rising to \DcFloMax\,MHz at \SI{500}{\micro A} as the transconductance of $M_{dc}$ grows. The loop gain, extracted from the ratio of the open- and closed-loop transimpedance, is \DcTzMin\ to \DcTzMax\,dB at DC, crosses unity between \DcFuMin\,kHz and \DcFuMax\,MHz and has at least \DcPmMin$^\circ$ of phase margin over the whole range. A low-frequency bump of up to \DcPkLfMax\,dB near \SI{10}{MHz} remains from the open-loop response at the held bias; there is no peaking in the signal band. For a \SI{0}{} to \SI{200}{\micro A} photocurrent step (Fig.~\ref{fig:dcc}c) the output dips by \DcDip\,mV and recovers to within \DcErr\,mV in \DcSettle\,\si{\micro s}; without the loop it drops by \PrDrop\,mV and stays there.
+
+The loop adds noise through $M_{dc}$ and the replica. At \SI{5}{GHz} the input-referred density is \DcInFive\,pA/$\sqrt{\text{Hz}}$ in the dark, \DcNoisePct\,\% above the circuit without the loop, and \DcInFiveThree\,pA/$\sqrt{\text{Hz}}$ at \SI{300}{\micro A}, where the photocurrent's own shot noise is \ShotThree\,pA/$\sqrt{\text{Hz}}$. At \SI{10}{Gb/s} with a \SI{100}{\micro A} peak-to-peak signal on top of an average current, the vertical eye opening is \DcEyeZero, \DcEyeHund\ and \DcEyeThree\,\% of the swing at 0, 100 and \SI{300}{\micro A}; without the loop it is \PrEyeZero\,\% at \SI{0}{} and \PrEyeHund\,\% at \SI{100}{\micro A}.
+
+Across the \DcPvtN\ process, voltage and temperature conditions the dark cancellation current stays below \DcPvtIdccMax\,\si{\micro A}, and at \SI{300}{\micro A} the bandwidth is at least \DcPvtBwMinB\,GHz except at slow, \SI{0.9}{V}, \SI{85}{\celsius}, where the reference current itself falls and the bandwidth is \DcPvtBwMin\,GHz. In a \DcMcN-sample local-mismatch Monte Carlo run the bandwidth at \SI{300}{\micro A} is $\DcMcBwMean\pm\DcMcBwStd$\,GHz with a minimum of \DcMcBwMin\,GHz. The standing cancellation current has a median of \DcMcIdccMed\,\si{\micro A} and a maximum of \DcMcIdccMax\,\si{\micro A}. Untrimmed, \DcMcPkN\ samples exceed \SI{1}{dB} of peaking (worst \DcMcPkMax\,dB, against \DcMcPrPkMax\,dB without the loop), because a high held current raises the follower transconductance. Trimming $V_{tune}$ brought every one of them below \SI{1}{dB} with at least \DcTrBwMin\,GHz in the dark, and with the same setting they kept at least \DcTrBwThree\,GHz and at most \DcTrPkThree\,dB at \SI{300}{\micro A}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig_dcc}
+\caption{DC-cancellation loop. (a) Bandwidth (solid) and gain at \SI{100}{MHz} (dotted) against average photocurrent. (b) Follower and cancellation currents. (c) Output for a photocurrent step. (d) Transimpedance with the loop at several average currents.}
+\label{fig:dcc}
+\end{figure}
+
 \section{Discussion}\label{sec:discussion}
 \subsection{What the active inductor does and does not do}
 The simulations support four statements. (i) The feedback element needs no spiral. A \SI{2.4}{nH} square spiral with 3.5 turns, \SI{6}{\micro m} tracks and \SI{2}{\micro m} spacing has an outer side of about \SpiralSide\,\si{\micro m} by the modified Wheeler expression \cite{mohanl}, or \SpiralArea\,mm$^2$. $M_f$, $M_t$ and a \SI{30}{fF} capacitor at an assumed \SI{1.5}{fF/\micro m^2} occupy about \AIArea\,\si{\micro m^2} when a five-fold allowance is made for contacts, spacing and routing, a ratio of roughly \AreaRatio. Both figures are estimates from dimensions, not layouts. (ii) One control voltage moves the bandwidth over a \TuneRatio:1 range at constant gain. (iii) The same voltage removes peaking caused by process, supply, temperature and photodiode spread. (iv) For loads of \SI{150}{fF} and above the inductive zero extends the bandwidth beyond that of resistive feedback.
@@ -292,7 +374,7 @@ The simulations support four statements. (i) The feedback element needs no spira
 They also support three limits. The network does not raise the maximum bandwidth at light loads; a designer who needs neither tuning nor trimming is better served by tying the follower gate to the output. Trimming cannot recover bandwidth lost by the input stage in slow or hot conditions. And the price of tunability at the nominal load is about \SI{16}{\percent} of bandwidth relative to the plain follower.
 
 \subsection{Comparison}
-Table~\ref{tab:comp} places the result beside the baseline and related current-mirror and tunable TIAs. The figures for other works are those their authors report, under their own conditions, and are not re-simulated here. Against the re-simulated baseline under identical conditions the proposed circuit has \GainImp\,dB more gain, \NoiseRatio\ times lower noise density at \SI{5}{GHz}, \PowSave\,\% lower power and a flat response in place of a resonance.
+Table~\ref{tab:comp} places the result beside the baseline and related current-mirror and tunable TIAs. The figures for other works are those their authors report, under their own conditions, and are not re-simulated here. Against the baseline as drawn, under identical conditions, the proposed circuit has \GainImp\,dB more gain, \NoiseRatio\ times lower noise density at \SI{5}{GHz}, \PowSave\,\% lower power and a flat response in place of a resonance; but against the re-optimised baseline (Table~\ref{tab:reopt}) the advantage narrows to bandwidth at high gain, inductorless feedback and tunability, paid for in power and noise density.
 
 \begin{table}[t]
 \centering
@@ -305,6 +387,7 @@ Work & Process, supply & Gain (dB$\Omega$) & BW (GHz) & Power (mW) & Inductor & 
 \midrule
 \cite{baseline}, as published & 90\,nm, \SI{1}{V} & 43.92 & 5--15 (flat) & n/r & spiral, \SI{2.4}{nH} & no \\
 \cite{baseline}, re-simulated & 90\,nm PTM, \SI{1}{V} & \BZt & \BFlat\ ($\pm$\SI{1}{dB}) & \BPow & spiral, \SI{2.4}{nH} & no \\
+\cite{baseline} topology, re-optimised & 90\,nm PTM, \SI{1}{V} & \RgZt & \RgBw & \RgPow & spiral, \RgLf\,nH & no \\
 \cite{zohoori} & 90\,nm, \SI{1}{V} & 40.5 & 7 & 1.4 & active, load & no \\
 \cite{hassan} & 40\,nm & 57.5 & 6.6 & n/r & none & no \\
 \cite{issa} & 45\,nm, \SI{1}{V} & 68.2 & 2.5 & 0.56 & active, local & no \\
@@ -313,16 +396,19 @@ Work & Process, supply & Gain (dB$\Omega$) & BW (GHz) & Power (mW) & Inductor & 
 \cite{hwang}$^{b}$ & \SI{0.18}{\micro m}, \SI{2}{V} & 52 & 3.9--7.6 & 34 & none & yes \\
 \cite{chien}$^{b}$ & \SI{0.18}{\micro m}, \SI{1.8}{V} & 47.8 & 6.2--10.5 & 33.3 & passive & yes \\
 This work (simulated) & 90\,nm PTM, \SI{1}{V} & \PZt & \TuneMin--\TuneMax & \PPow & active, global & yes \\
+This work with DCC & 90\,nm PTM, \SI{1}{V} & \DcZtDark & \DcBwDark & \DcPow & active, global & yes \\
 \bottomrule
 \end{tabular}\\[2pt]
 \raggedright\footnotesize $^{a}$Passive-inductor version, \SI{1}{pF} photodiode. $^{b}$Measured silicon; all other entries are simulations.
 \end{table}
 
 \subsection{Limitations}
-The results are schematic-level simulations with a predictive model. Layout parasitics, especially at the input and at node $N$, will lower the bandwidth, and the synthetic corners and assumed mismatch coefficients stand in for foundry data. The photodiode is a current source with a capacitor; bond-wire or bump inductance and electrostatic-discharge protection are not modelled. The reference current is ideal. The input stage tolerates only a few tens of microamperes of average photocurrent, so a practical receiver needs a DC-cancellation loop at the input or a larger follower current, at a cost in noise or gain. The \SI{37}{mV} saturation margin of $M_{3b}$ is small. The eye diagrams contain no noise. Each of these is a necessary next step before the circuit could be claimed to be ready for fabrication.
+The results are schematic-level simulations with a predictive model. Layout parasitics, especially at the input and at node $N$, will lower the bandwidth, and the synthetic corners and assumed mismatch coefficients stand in for foundry data. The photodiode is a current source with a capacitor; bond-wire or bump inductance and electrostatic-discharge protection are not modelled. The reference current is ideal; the cancellation threshold and the slow-corner bandwidth with the loop depend on it, so a real design needs a bandgap-derived reference. The cancellation loop's low-frequency corner (up to \DcFloMax\,MHz) limits long runs of identical bits, and the step response was simulated without data on top. The diagnosis of the published baseline rests on digitised points and on assumed capacitances, and identifies conditions consistent with the published curve rather than the original simulation settings. The \SI{37}{mV} saturation margin of $M_{3b}$ is small. The eye diagrams contain no noise. Each of these is a necessary next step before the circuit could be claimed to be ready for fabrication.
 
 \section{Conclusion}
-A published 90\,nm current-mirror TIA with a spiral feedback inductor was re-simulated with a BSIM4 model and found to give \BZt\,dB$\Omega$ with an \BPk\,dB resonance, because its common-gate device is left in triode. A replacement was designed in which the input devices form a flipped voltage follower and the feedback path is a source follower with a voltage-tuned gate network. In simulation at \SI{1}{V} and \PPow\,mW it reaches \PZt\,dB$\Omega$, \PBW\,GHz and \PInFive\,pA/$\sqrt{\text{Hz}}$ at \SI{5}{GHz} without an inductor, its bandwidth can be set between \TuneMin\ and \TuneMax\,GHz by one voltage, and the same voltage holds peaking at or below \SI{0.5}{dB} across the process, voltage, temperature and mismatch cases examined. The tuning network does not extend the maximum bandwidth at light loads and the input overloads at a few tens of microamperes of average current; a DC-cancellation loop, post-layout verification with a foundry kit and measurement are the next steps.
+A published 90\,nm current-mirror TIA with a spiral feedback inductor was re-simulated with a BSIM4 model and found to give \BZt\,dB$\Omega$ with an \BPk\,dB resonance, because its common-gate device is left in triode. A fitting study showed that no bias, spiral loss or capacitance brings the circuit with a \SI{2.4}{nH} inductor within \DgRmsBestL\,dB of the published curve, while the same circuit without effective inductive feedback and at about a fifth of the drawn bias current matches it to \DgRmsNoL\,dB; the published response is not a property of the circuit as drawn. Re-optimising the baseline topology under the same constraints gave a fairer reference, which reaches a similar gain-bandwidth product to the proposed design at a quarter of the power but only \RgBw\,GHz at the proposed design's gain.
+
+The proposed replacement uses a flipped-voltage-follower input and a source follower with a voltage-tuned gate network as feedback. In simulation at \SI{1}{V} and \PPow\,mW it reaches \PZt\,dB$\Omega$, \PBW\,GHz and \PInFive\,pA/$\sqrt{\text{Hz}}$ at \SI{5}{GHz} without an inductor, one voltage sets its bandwidth between \TuneMin\ and \TuneMax\,GHz, and the same voltage holds peaking at or below \SI{0.5}{dB} across the process, voltage, temperature and mismatch cases examined. A DC-cancellation loop that regulates the follower current raises the tolerable average photocurrent from about \PrLimit\ to \DcLimit\,\si{\micro A} for \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise. The tuning network does not extend the maximum bandwidth at light loads. Post-layout verification with a foundry kit and measurement are the next steps.
 
 \section*{Data availability}
 The netlists, the model card, the scripts that run every simulation and the raw results are available in the project repository.

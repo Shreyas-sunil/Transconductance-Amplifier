@@ -354,13 +354,13 @@ def prbs7(n=254):
     return out
 
 
-def eye_run(circ, rate, P=None, ipp=100e-6, nbits=254, tag=''):
+def eye_run(circ, rate, P=None, ipp=100e-6, nbits=254, tag='', idc=0.0):
     ui = 1 / rate; tr = 0.25 * ui
     bits = prbs7(nbits)
-    pts = ['0 0']; prev = 0
+    pts = [f'0 {idc:.4e}']; prev = 0
     for k, b in enumerate(bits):
         if b != prev:
-            pts.append(f'{k*ui:.6e} {prev*ipp:.4e}'); pts.append(f'{k*ui+tr:.6e} {b*ipp:.4e}'); prev = b
+            pts.append(f'{k*ui:.6e} {idc+prev*ipp:.4e}'); pts.append(f'{k*ui+tr:.6e} {idc+b*ipp:.4e}'); prev = b
     lines = ['Iin 0 in pwl('] + ['+ ' + ' '.join(pts[i:i + 6]) for i in range(0, len(pts), 6)] + ['+ )']
     t = os.path.join(sim.TMP, f'eye_{circ}{tag}.txt')
     ctl = f'tran {ui/100:.4e} {nbits*ui:.6e}\nwrdata {t} v(out)'

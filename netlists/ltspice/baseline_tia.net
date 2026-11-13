@@ -1,4 +1,4 @@
-* Baseline TIA - Alsheikhjader 2020 Fig. 1 (passive Lf = 2.4 nH), PTM 90 nm BSIM4
+* Baseline TIA - Alsheikhjader 2020 Fig. 1 as drawn (passive Lf = 2.4 nH), PTM 90 nm BSIM4
 * LTspice: File > Open (All files) > this .net, then Run.
 * One analysis at a time: keep one of the lines below active, comment the others with ";".
 .include ptm90.lib

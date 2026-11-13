@@ -1,0 +1,29 @@
+* Baseline topology re-optimised for maximum bandwidth at the proposed gain (fair comparison), PTM 90 nm BSIM4
+* LTspice: File > Open (All files) > this .net, then Run.
+* One analysis at a time: keep one of the lines below active, comment the others with ";".
+.include ptm90.lib
+.param vdd=1.0 cpd=50f cout=30f lf=5.036n vg3b=0.527 vg2b=0.781 rsl=43.0
+.temp 35
+
+Vg2b g2b 0 dc {vg2b}
+Vdd vdd 0 dc {vdd}
+Vg3b g3b 0 dc {vg3b}
+M2b n g2b vdd vdd pmos90 W=4.64u L=90n AD=0.928p AS=0.928p PD=9.68u PS=9.68u
+M1 n vdd in 0 nmos90 W=1.05u L=90n AD=0.21p AS=0.21p PD=2.5u PS=2.5u
+M2 in n 0 0 nmos90 W=7.22u L=90n AD=1.444p AS=1.444p PD=14.84u PS=14.84u
+M3 out n 0 0 nmos90 W=1.68u L=90n AD=0.336p AS=0.336p PD=3.76u PS=3.76u
+M3b out g3b vdd vdd pmos90 W=1.73u L=90n AD=0.346p AS=0.346p PD=3.86u PS=3.86u
+Lf out xl {lf}
+Rsl xl in {rsl}
+Cpd in 0 {cpd}
+Cout out 0 {cout}
+Iin 0 in dc 0 ac 1
+
+.ac dec 40 10Meg 200G
+;.noise V(out) Iin dec 40 10Meg 200G
+;.op
+.meas AC zt0 FIND mag(V(out)) AT 100Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

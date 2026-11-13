@@ -1,6 +1,6 @@
 ;; OCEAN: plot results of a Spectre run of the netlists in this folder.
 ;; First run:  spectre proposed_tia.scs   (and/or baseline_tia.scs), then in the CIW or `ocean`:  load("plot_results.ocn")
-foreach( name '("baseline_tia" "proposed_tia")
+foreach( name '("baseline_tia" "baseline_reopt_gain" "baseline_reopt_gbw" "proposed_tia" "proposed_tia_dcc")
   when( isDir(strcat("./" name ".raw"))
     openResults(strcat("./" name ".raw"))
     selectResult('acZt)

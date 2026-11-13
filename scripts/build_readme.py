@@ -11,7 +11,9 @@ feedback, designed and simulated at 1 V with the 90 nm Predictive Technology Mod
 The starting point is the TIA of Alsheikhjader (Rafidain J. Sci. 29(1), 2020), which uses a 2.4 nH spiral
 inductor from output back to input. This repository contains (1) a BSIM4 re-simulation of that circuit as
 drawn, (2) a redesigned circuit in which the spiral is replaced by a voltage-tuned active inductor, and
-(3) everything needed to reproduce the results and the paper.
+(3) a diagnosis of why the published response cannot be reproduced, (4) two re-optimised versions of the
+baseline topology used as a fair reference, (5) a DC-cancellation loop that removes the input overload
+limit, and (6) everything needed to reproduce the results and the paper.
 
 **Status: schematic-level simulation only.** No layout, no foundry kit, no silicon. Corners and mismatch
 coefficients are assumed values. See "Known limits" below before quoting any number.
@@ -35,13 +37,46 @@ Conditions: ngspice 42, PTM 90 nm BSIM4, 1 V, 35 °C, 50 fF photodiode, 30 fF lo
 | Worst peaking over 15 PVT conditions | {N['PvtPkMax']} dB with Vtune fixed, {N['PvtPkTMax']} dB trimmed |
 | Bandwidth over 15 PVT conditions | {N['PvtBwMin']} to {N['PvtBwMax']} GHz fixed, {N['PvtBwTMin']} to {N['PvtBwTMax']} GHz trimmed |
 {mc}
-The reference numbers are what the published schematic gives in BSIM4, not the numbers printed in the
-2020 paper (43.92 dBΩ, flat 5 to 15 GHz). `docs/Design_Changes_Report.docx` explains the difference.
+### Fair comparison (same 50/30 fF, ≤1 dB peaking, ≤1.2 mW)
+
+| | Baseline re-optimised, max GBW | Baseline re-optimised, same gain | Proposed |
+|---|---|---|---|
+| Gain | {N['RbZt']} dBΩ | {N['RgZt']} dBΩ | {N['PZt']} dBΩ |
+| Bandwidth | {N['RbBw']} GHz | {N['RgBw']} GHz | {N['PBW']} GHz |
+| Power | {N['RbPow']} mW | {N['RgPow']} mW | {N['PPow']} mW |
+| Noise at 5 GHz | {N['RbInFive']} pA/√Hz | {N['RgInFive']} pA/√Hz | {N['PInFive']} pA/√Hz |
+| Gain × bandwidth | {N['RbGbw']} TΩHz | {N['RgGbw']} TΩHz | {N['PGbw']} TΩHz |
+
+At equal gain the proposed TIA has {N['BwRatioGain']}× the bandwidth; the baseline topology wins on power
+and noise density. Compare against this table, not against the as-drawn baseline.
+
+### Why the 2020 curve cannot be reproduced
+
+With the stated 2.4 nH, no combination of PMOS gate biases, spiral loss and capacitances fits the published
+curve better than {N['DgRmsBestL']} dB rms, and every case resonates. With the feedback inductance below about
+{N['DgLfMax']} pH and the mirror at about {N['DgIdNoL']} µA per branch, the fit is {N['DgRmsNoL']} dB rms. The published
+response is that of the circuit without effective inductive feedback (`scripts/baseline_diag.py`).
+
+### DC-cancellation loop (`proposed_tia_dcc`)
+
+| | Without loop | With loop |
+|---|---|---|
+| Average photocurrent with gain within 1 dB and bandwidth within 10 % | {N['PrLimit']} µA | {N['DcLimit']} µA |
+| Bandwidth at 300 µA | collapsed | {N['DcBwThree']} GHz |
+| Dark gain / bandwidth | {N['PZt']} dBΩ / {N['PBW']} GHz | {N['DcZtDark']} dBΩ / {N['DcBwDark']} GHz |
+| Noise at 5 GHz (dark) | {N['PInFive']} pA/√Hz | {N['DcInFive']} pA/√Hz |
+| Power | {N['PPow']} mW | {N['DcPow']} mW |
+| Loop phase margin, low-frequency corner | n/a | ≥ {N['DcPmMin']}°, {N['DcFloDark']} kHz to {N['DcFloMax']} MHz |
+
 
 ## Known limits
 
-- **Input overload.** The feedback follower carries {N['IF']} µA; gain rises by {N['OvA']} dB at 25 µA of
-  average photocurrent and the feedback is lost near 100 µA. A DC-cancellation loop is needed and is not designed yet.
+- **Input overload without the loop.** The feedback follower carries {N['IF']} µA; without the DC-cancellation
+  loop, gain rises by {N['OvA']} dB at 25 µA of average photocurrent and the feedback is lost near 100 µA.
+- **DC-cancellation loop mismatch.** The held follower current varies by σ = {N['DcMcImfStd']} µA in Monte Carlo;
+  {N['DcMcPkN']} of {N['DcMcN']} samples need a Vtune trim to stay under 1 dB peaking. The reference current is ideal.
+- **The baseline diagnosis** rests on digitised points and assumed capacitances. It shows which conditions
+  fit the published curve, not what the original authors actually simulated.
 - **No extra bandwidth at light load.** Plain follower feedback reaches {N['LdResLight']} GHz against
   {N['LdAiLight']} GHz for the tunable network. The inductive zero only helps at heavy load
   ({N['LdRatioHeavy']}× at 250 fF).
@@ -54,9 +89,9 @@ The reference numbers are what the published schematic gives in BSIM4, not the n
 
 | Path | Contents |
 |---|---|
-| `netlists/ngspice/` | `baseline_tia.cir`, `proposed_tia.cir`: run with `ngspice -b <file>` |
-| `netlists/ltspice/` | `.net` netlists and `.asc` schematics of both circuits, custom MOS symbols, model card |
-| `netlists/cadence/` | Spectre netlists (`.scs`), SKILL script that builds both Virtuoso schematics, OCEAN plot script |
+| `netlists/ngspice/` | Five circuits, run with `ngspice -b <file>`: `baseline_tia` (as drawn), `baseline_reopt_gain`, `baseline_reopt_gbw`, `proposed_tia`, `proposed_tia_dcc` |
+| `netlists/ltspice/` | `.net` netlists and `.asc` schematics of all five circuits, custom MOS symbols, model card |
+| `netlists/cadence/` | Spectre netlists (`.scs`) of all five, SKILL script that builds all five Virtuoso schematics, OCEAN plot script |
 | `models/ptm90.lib` | PTM 90 nm bulk BSIM4 card (models renamed `nmos90`, `pmos90`) |
 | `scripts/` | `circuits.py` (single source of truth for both circuits), `run_all.py`, `make_figures.py`, emitters |
 | `results/data/` | Raw simulation output (CSV, JSON) |
@@ -71,6 +106,9 @@ sudo apt-get install ngspice            # version 42 was used
 pip install numpy scipy matplotlib
 cd scripts
 python3 run_all.py        # every simulation (about 30 minutes on 2 cores)
+python3 baseline_diag.py screen fit fitlf lfscan   # why the 2020 curve cannot be reproduced
+python3 baseline_diag.py opt; python3 baseline_diag.py optgain 53.87; python3 baseline_diag.py optnoise
+python3 dcc_study.py      # DC-cancellation loop: sweep, noise, loop gain, step, eye, PVT, Monte Carlo
 python3 summarize.py      # results/summary.json
 python3 make_figures.py   # results/figures
 python3 build_paper.py    # paper/numbers.tex and tables
@@ -83,6 +121,7 @@ To change the design, edit `scripts/circuits.py` and rerun; every netlist, figur
 ## Using the other simulators
 
 - **LTspice:** open `netlists/ltspice/proposed_tia.asc` (schematic) or `proposed_tia.net` (netlist) and run.
+  For the DC-cancellation version open `proposed_tia_dcc.asc`; the parameter `idc` is the average photocurrent.
   Keep `ptm90.lib` and the two `.asy` symbol files in the same folder. Nets in the schematic are joined by label.
 - **Cadence Spectre:** `cd netlists/cadence && spectre proposed_tia.scs`, then `load("plot_results.ocn")` in OCEAN.
 - **Cadence Virtuoso schematic:** create an empty library, then in the CIW `load("build_tia_schematics.il")`
