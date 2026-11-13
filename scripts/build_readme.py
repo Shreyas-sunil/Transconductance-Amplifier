@@ -47,6 +47,7 @@ The reference numbers are what the published schematic gives in BSIM4, not the n
   ({N['LdRatioHeavy']}× at 250 fF).
 - **Trimming cannot recover slow or hot corners.**
 - PTM has no foundry corners; corners here are ±30 mV threshold and ±5 % mobility skews.
+- **Novelty is narrow.** Tunable-bandwidth TIAs (measured in silicon) and active inductors in current-mirror TIAs already exist; see `docs/Literature_Review.md`.
 - LTspice and Cadence files were generated but not run (neither tool was available); only ngspice was run.
 
 ## Repository layout
@@ -61,7 +62,7 @@ The reference numbers are what the published schematic gives in BSIM4, not the n
 | `results/data/` | Raw simulation output (CSV, JSON) |
 | `results/figures/` | Every figure, PNG and PDF |
 | `paper/` | `main.tex`, `main.pdf`, `Paper_ActiveInductor_TIA.docx`, figures |
-| `docs/` | `Design_Changes_Report.docx`, `Project_Presentation.pptx`, and the scripts that build them |
+| `docs/` | `Design_Changes_Report.docx`, `Project_Presentation.pptx`, `Literature_Review.md`, and the scripts that build them |
 
 ## Reproduce
 

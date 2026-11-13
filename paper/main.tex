@@ -21,14 +21,16 @@ A current-mirror transimpedance amplifier (TIA) that uses a \SI{2.4}{nH} spiral 
 \noindent\textbf{Keywords:} transimpedance amplifier; active inductor; current mirror; flipped voltage follower; optical receiver; bandwidth tuning; 90\,nm CMOS.
 
 \section{Introduction}
-The transimpedance amplifier sets the sensitivity and much of the bandwidth of an optical receiver front end \cite{razavi,sackinger}. Current-mirror TIAs are attractive at supplies of \SI{1}{V} and below because the signal stays in the current domain until the output node, and several low-power designs in 90\,nm and 45\,nm CMOS have been reported \cite{zohoori,hassan,atef,issa,alyas,abdalla}. Bandwidth is commonly extended with inductive peaking \cite{mohanbw}. On-chip spirals occupy an area far larger than the transistors they serve, their value is fixed at fabrication, and their quality factor and self-resonance are set by the substrate. Active inductors trade these limits for noise, power and limited linearity \cite{yuan,sackingerla}, and they add something a spiral cannot offer: electrical tuning \cite{hwang}.
+The transimpedance amplifier sets the sensitivity and much of the bandwidth of an optical receiver front end \cite{razavi,sackinger}. Current-mirror TIAs are attractive at supplies of \SI{1}{V} and below because the signal stays in the current domain until the output node, and several designs in 40 to 90\,nm CMOS have been reported \cite{zohoori,hassan,atef,issa,alyas,shaaban}. Bandwidth is commonly extended with inductive peaking \cite{mohanbw}, or without inductors by active feedback at the input \cite{luactive,taghavi}. On-chip spirals occupy an area far larger than the transistors they serve, their value is fixed at fabrication, and their quality factor and self-resonance are set by the substrate. Active inductors trade these limits for noise, power and limited linearity \cite{yuan,sackingerla}, and they add something a spiral cannot offer: electrical tuning. A source follower whose gate is fed through a resistor is the simplest of them \cite{razaviai}.
 
-Alsheikhjader \cite{baseline} reported a 90\,nm, \SI{1}{V} current-mirror TIA in which a \SI{2.4}{nH} inductor connects the output back to the input, with a stated gain of \SI{43.92}{dB\ohm} and a flat band from 5 to \SI{15}{GHz}. That work was simulated in a microwave circuit simulator and does not report power, photodiode capacitance, load, or the device model. Later designs from the same group use a two-transistor active inductor as local feedback and reach 1 to \SI{2.5}{GHz} \cite{issa,alyas}.
+Alsheikhjader \cite{baseline} reported a 90\,nm, \SI{1}{V} current-mirror TIA in which a \SI{2.4}{nH} inductor connects the output back to the input, with a stated gain of \SI{43.92}{dB\ohm} and a flat band from 5 to \SI{15}{GHz}. That work was simulated in a microwave circuit simulator and does not report power, photodiode capacitance, load, or the device model. Later designs from the same group use PMOS triode active inductors as local feedback around the input or mirror stage and reach 1 to \SI{2.5}{GHz} \cite{alberwari,issa,alyas}.
+
+\paragraph{Related work and positioning.} None of the ingredients used here is new on its own, and the paper does not claim otherwise. Source-follower active inductors are textbook circuits \cite{yuan,razaviai}. Active inductors have been used in current-mirror TIAs as output loads \cite{zohoori}, as shunt peaking at 1\,V in 45\,nm \cite{shaaban}, and as local feedback \cite{alberwari,issa,alyas}. Flipped-voltage-follower input stages have been used in TIAs \cite{gungordu}. Bandwidth tuning of a TIA by a control voltage was demonstrated in silicon from 3.9 to \SI{7.6}{GHz} \cite{hwang} and from 6.2 to \SI{10.5}{GHz} \cite{chien}, and receiver front ends with programmable bandwidth for multi-rate links have been reported \cite{dash}. What has not, to the author's knowledge, been reported is the combination studied here: an active inductor placed as the \emph{global} output-to-input feedback of a current-mirror TIA in place of a passive spiral, with one control voltage used both to set the bandwidth and to trim out process, voltage and temperature peaking at \SI{1}{V}. The contribution is therefore an incremental, carefully characterised design study, together with an independent re-simulation of the published baseline.
 
 This paper asks two questions. First, how does the published circuit behave with a compact model that includes realistic threshold voltages, output conductance and parasitic capacitance? Second, can the spiral be replaced by an active inductor in the same output-to-input position at a \SI{1}{V} supply, and what is gained and lost? The contributions are:
 \begin{enumerate}
 \item A BSIM4 re-simulation of the baseline as drawn, with its operating point, a closed-form low-frequency gain, and a list of the differences from the published curves (Section~\ref{sec:baseline}).
-\item A \SI{1}{V} current-mirror TIA with a single-transistor, voltage-tuned active-inductor feedback network that needs no spiral, with its bias and headroom budget and a small-signal model (Section~\ref{sec:proposed}).
+\item A \SI{1}{V} current-mirror TIA in which a single-transistor, voltage-tuned active inductor replaces the spiral as global feedback, with its bias and headroom budget and a small-signal model (Section~\ref{sec:proposed}).
 \item A simulated characterisation: gain, noise by device, loop gains, the tuning law, fifteen process, voltage and temperature conditions, a \McN-sample Monte Carlo run with and without trimming, and eye diagrams (Section~\ref{sec:results}).
 \item A cost account that separates what the tuning network does from what it does not, including the load range over which the inductive zero helps and the input overload limit (Section~\ref{sec:discussion}).
 \end{enumerate}
@@ -303,14 +305,17 @@ Work & Process, supply & Gain (dB$\Omega$) & BW (GHz) & Power (mW) & Inductor & 
 \midrule
 \cite{baseline}, as published & 90\,nm, \SI{1}{V} & 43.92 & 5--15 (flat) & n/r & spiral, \SI{2.4}{nH} & no \\
 \cite{baseline}, re-simulated & 90\,nm PTM, \SI{1}{V} & \BZt & \BFlat\ ($\pm$\SI{1}{dB}) & \BPow & spiral, \SI{2.4}{nH} & no \\
-\cite{zohoori} & 90\,nm, \SI{1}{V} & 40.5 & 7 & 1.4 & none & no \\
-\cite{hassan} & n/r & 57.5 & 6.6 & n/r & none & no \\
-\cite{issa} & 45\,nm, \SI{1}{V} & 68.2 & 2.5 & n/r & active, local & no \\
+\cite{zohoori} & 90\,nm, \SI{1}{V} & 40.5 & 7 & 1.4 & active, load & no \\
+\cite{hassan} & 40\,nm & 57.5 & 6.6 & n/r & none & no \\
+\cite{issa} & 45\,nm, \SI{1}{V} & 68.2 & 2.5 & 0.56 & active, local & no \\
+\cite{shaaban} & 45\,nm, \SI{1}{V} & 30.6$^{a}$ & 2.8$^{a}$ & 1.63$^{a}$ & shunt peaking & no \\
 \cite{alyas} & 45\,nm, \SI{1}{V} & 62.2 & 1 & n/r & active, local & not swept \\
-\cite{hwang} & \SI{0.18}{\micro m} & 52 & 3.9--7.6 & n/r & none & yes \\
+\cite{hwang}$^{b}$ & \SI{0.18}{\micro m}, \SI{2}{V} & 52 & 3.9--7.6 & 34 & none & yes \\
+\cite{chien}$^{b}$ & \SI{0.18}{\micro m}, \SI{1.8}{V} & 47.8 & 6.2--10.5 & 33.3 & passive & yes \\
 This work (simulated) & 90\,nm PTM, \SI{1}{V} & \PZt & \TuneMin--\TuneMax & \PPow & active, global & yes \\
 \bottomrule
-\end{tabular}
+\end{tabular}\\[2pt]
+\raggedright\footnotesize $^{a}$Passive-inductor version, \SI{1}{pF} photodiode. $^{b}$Measured silicon; all other entries are simulations.
 \end{table}
 
 \subsection{Limitations}
@@ -330,12 +335,19 @@ The netlists, the model card, the scripts that run every simulation and the raw 
 \bibitem{atef} M. Atef, ``High gain transimpedance amplifier with current mirror load,'' in \emph{Proc. 21st Int. Conf. Mixed Design of Integrated Circuits and Systems (MIXDES)}, Lublin, Poland, 2014.
 \bibitem{issa} M. S. H. Alsheikhjader and A. A. Issa, ``A simulated 45 nm MOSFET channel process in transimpedance amplifier design for optoelectronics applications,'' \emph{Jordan J. Phys.}, vol. 17, no. 2, pp. 165--178, 2024.
 \bibitem{alyas} M. M. Alyas and M. S. H. Alsheikhjader, ``A low-power 45 nm CMOS transimpedance amplifier with active inductor feedback for fiber-optic applications,'' \emph{Jordan J. Phys.}, vol. 19, no. 2, pp. 131--143, 2026.
-\bibitem{abdalla} Y. S. M. Abdalla, ``Design of a novel CMOS transimpedance amplifier based on a current mirror,'' \emph{Int. J. Circuit Theory Appl.}, 2024, doi: 10.1002/cta.4353.
+\bibitem{shaaban} Shaaban \emph{et al.}, ``Design of a novel CMOS transimpedance amplifier based on a current mirror,'' \emph{Int. J. Circuit Theory Appl.}, 2025, doi: 10.1002/cta.4353.
 \bibitem{mohanbw} S. S. Mohan, M. del M. Hershenson, S. P. Boyd, and T. H. Lee, ``Bandwidth extension in CMOS with optimized on-chip inductors,'' \emph{IEEE J. Solid-State Circuits}, vol. 35, no. 3, pp. 346--355, 2000.
+\bibitem{luactive} Z. Lu, K. S. Yeo, J. Ma, M. A. Do, W. M. Lim, and X. Chen, ``Design of a CMOS broadband transimpedance amplifier with active feedback,'' \emph{IEEE Trans. Very Large Scale Integr. (VLSI) Syst.}, vol. 18, no. 3, pp. 461--472, 2010.
+\bibitem{taghavi} M. H. Taghavi, L. Belostotski, J. W. Haslett, and P. Ahmadi, ``10-Gb/s 0.13-$\mu$m CMOS inductorless modified-RGC transimpedance amplifier,'' \emph{IEEE Trans. Circuits Syst. I, Reg. Papers}, vol. 62, no. 8, pp. 1971--1980, 2015.
 \bibitem{yuan} F. Yuan, \emph{CMOS Active Inductors and Transformers: Principle, Implementation, and Applications}. New York, NY, USA: Springer, 2008.
 \bibitem{sackingerla} E. S\"ackinger and W. C. Fischer, ``A 3-GHz 32-dB CMOS limiting amplifier for SONET OC-48 receivers,'' \emph{IEEE J. Solid-State Circuits}, vol. 35, no. 12, pp. 1884--1888, 2000.
-\bibitem{hwang} H.-Y. Hwang, J.-C. Chien, T.-Y. Chen, and L.-H. Lu, ``A CMOS tunable transimpedance amplifier,'' \emph{IEEE Microw. Wireless Compon. Lett.}, vol. 16, no. 12, pp. 693--695, 2006.
+\bibitem{razaviai} B. Razavi, ``The active inductor [A circuit for all seasons],'' \emph{IEEE Solid-State Circuits Mag.}, vol. 12, no. 2, pp. 7--11, 2020.
 \bibitem{baseline} M. S. H. Alsheikhjader, ``Low noise with wide band transimpedance amplifier for nonlinear fiber optical applications,'' \emph{Rafidain J. Sci.}, vol. 29, no. 1, pp. 71--78, 2020, doi: 10.33899/rjs.2020.164476.
+\bibitem{alberwari} R. A. Al-Berwari and M. S. H. Alsheikhjader, ``An active inductor based transimpedance amplifier with two local feedbacks as a fiber optic application,'' \emph{Rafidain J. Sci.}, vol. 32, no. 2, pp. 38--52, 2023, doi: 10.33899/rjs.2023.178574.
+\bibitem{gungordu} A. D. G\"ung\"ord\"u, \.I. C\"omerto\u{g}lu, and M. B. Yelten, ``A fully-differential, flipped-voltage-follower-based (FVF) transimpedance design for optical receivers with large-area photodetectors,'' \emph{Analog Integr. Circuits Signal Process.}, vol. 113, pp. 241--248, 2022.
+\bibitem{hwang} H.-Y. Hwang, J.-C. Chien, T.-Y. Chen, and L.-H. Lu, ``A CMOS tunable transimpedance amplifier,'' \emph{IEEE Microw. Wireless Compon. Lett.}, vol. 16, no. 12, pp. 693--695, 2006.
+\bibitem{chien} C.-K. Chien, H.-H. Hsieh, H.-S. Chen, and L.-H. Lu, ``A transimpedance amplifier with a tunable bandwidth in 0.18-$\mu$m CMOS,'' \emph{IEEE Trans. Microw. Theory Techn.}, vol. 58, no. 3, pp. 498--505, 2010.
+\bibitem{dash} P. P. Dash, G. Cowan, and O. Liboiron-Ladouceur, ``A variable-bandwidth, power-scalable optical receiver front-end in 65 nm,'' in \emph{Proc. IEEE Int. New Circuits Syst. Conf. (NEWCAS)}, 2013.
 \bibitem{ngspice} H. Vogt \emph{et al.}, \emph{Ngspice User's Manual}, version 42, 2023.
 \bibitem{ptm} W. Zhao and Y. Cao, ``New generation of predictive technology model for sub-45 nm early design exploration,'' \emph{IEEE Trans. Electron Devices}, vol. 53, no. 11, pp. 2816--2823, 2006.
 \bibitem{fvf} R. G. Carvajal \emph{et al.}, ``The flipped voltage follower: a useful cell for low-voltage low-power circuit design,'' \emph{IEEE Trans. Circuits Syst. I}, vol. 52, no. 7, pp. 1276--1291, 2005.
