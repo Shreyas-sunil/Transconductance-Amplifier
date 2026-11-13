@@ -67,6 +67,81 @@ def proposed(sz=None):
     ]
 
 
+# DC-cancellation (DCC) loop added to the proposed TIA.  What collapses under a large
+# average photocurrent is the follower current I(Mf): every microampere of photocurrent
+# is taken from Mf, until the feedback path turns off.  I(Mf) sets V_GS(Mf) = V_OUT - V_IN.
+# A replica follower Mr (half of Mf) driven from V_OUT and biased by I_th/2 gives
+# V_R = V_OUT - V_GS(I_th).  A PMOS-input OTA compares V_R with V_IN (both through RC
+# taps that isolate the signal path above ~8 MHz) and integrates the difference on Cint;
+# its output drives Mdc, which sinks current from the input.  The loop therefore holds
+# I(Mf) at I_th whatever the average photocurrent.  I_th (about 105 uA) is set slightly
+# above the nominal dark value of I(Mf) (99 uA), so the loop is engaged in the dark as
+# well; this makes the held current insensitive to mismatch in the core (see dcc_study).
+DCC_P = dict(rtap='100k', ctap='0.2p', cint='2p', vtune=0.26)   # Vtune re-centred: the loop holds I(Mf) slightly above its dark value
+DCC_SZ = {'Mq': (0.8, 180), 'Mnq': (2, 1440), 'Mns': (5.7, 1440), 'Mr': (1.75, 90),
+          'Mtp': (0.4, 720), 'Ma': (4, 720), 'Mb': (4, 720), 'Mna': (1, 1440), 'Mnb': (1, 1440),
+          'Mdc': (6, 180)}
+
+
+def proposed_dcc(sz=None):
+    """Proposed TIA with the DC-cancellation loop."""
+    s = dict(PROP_SZ); s.update(DCC_SZ); s.update(sz or {})
+    el = list(proposed(sz))
+    i = [k for k, e in enumerate(el) if e[1] == 'Cpd'][0]
+    el[i:i] = [
+        # reference current from the bias generator (I_th/2 in Mns)
+        ('M', 'Mq', 'nq', 'vbp', 'vdd', 'vdd', 'p') + s['Mq'],
+        ('M', 'Mnq', 'nq', 'nq', '0', '0', 'n') + s['Mnq'],
+        # RC taps on V_OUT and V_IN
+        ('R', 'Rt1', 'out', 'to', '{rtap}'),
+        ('C', 'Ct1', 'to', '0', '{ctap}'),
+        ('R', 'Rt2', 'in', 'ti', '{rtap}'),
+        ('C', 'Ct2', 'ti', '0', '{ctap}'),
+        # replica follower: V_R = V_OUT - V_GS(I_th)
+        ('M', 'Mr', 'vdd', 'to', 'vrep', '0', 'n') + s['Mr'],
+        ('M', 'Mns', 'vrep', 'nq', '0', '0', 'n') + s['Mns'],
+        # PMOS-input OTA integrating on Cint
+        ('M', 'Mtp', 'tp', 'vbp', 'vdd', 'vdd', 'p') + s['Mtp'],
+        ('M', 'Ma', 'oa', 'ti', 'tp', 'vdd', 'p') + s['Ma'],
+        ('M', 'Mb', 'vx', 'vrep', 'tp', 'vdd', 'p') + s['Mb'],
+        ('M', 'Mna', 'oa', 'oa', '0', '0', 'n') + s['Mna'],
+        ('M', 'Mnb', 'vx', 'oa', '0', '0', 'n') + s['Mnb'],
+        ('C', 'Cint', 'vx', '0', '{cint}'),
+        # cancellation device
+        ('M', 'Mdc', 'in', 'vx', '0', '0', 'n') + s['Mdc'],
+    ]
+    return el
+
+
+# Re-optimised baselines (fair comparison, results/data/baseline_reopt.json).  Same
+# topology as Fig. 1 of the 2020 paper, but the M2b gate gets its own bias, the spiral has
+# a series loss Rsl, and widths, both PMOS gate biases, Lf and Rsl were chosen by a
+# differential-evolution search under the constraints used for the proposed TIA
+# (C_PD = 50 fF, C_L = 30 fF, <= 1 dB peaking, <= 1.2 mW).
+BASE_REOPT = {
+    # maximum gain-bandwidth product
+    'gbw': dict(sz={'M1': (1.8, 90), 'M2': (12.37, 90), 'M3': (1.69, 90), 'M3b': (4.34, 90), 'M2b': (5.35, 90)},
+                P=dict(vg3b=0.596, lf='1.251n'), vg2b=0.591, rsl=42.8),
+    # maximum bandwidth at the proposed TIA's gain (>= 53.87 dBohm)
+    'gain': dict(sz={'M1': (1.05, 90), 'M2': (7.22, 90), 'M3': (1.68, 90), 'M3b': (1.73, 90), 'M2b': (4.64, 90)},
+                 P=dict(vg3b=0.527, lf='5.036n'), vg2b=0.781, rsl=43.0),
+}
+
+
+def baseline_reopt(kind):
+    """Element list of a re-optimised baseline (kind = 'gbw' or 'gain')."""
+    r = BASE_REOPT[kind]
+    out = [('V', 'Vg2b', 'g2b', '0', '{vg2b}', None)]
+    for e in baseline(r['sz']):
+        if e[0] == 'M' and e[1] == 'M2b':
+            e = e[:3] + ('g2b',) + e[4:]
+        if e[0] == 'L':
+            out += [('L', 'Lf', 'out', 'xl', e[4]), ('R', 'Rsl', 'xl', 'in', '{rsl}')]
+            continue
+        out.append(e)
+    return out
+
+
 def mos_geom(w_um):
     """Source/drain junction geometry assumed for every device (0.2 um diffusion)."""
     ad = w_um * 0.2          # pm^2 (um * um)

@@ -1,0 +1,38 @@
+\documentclass[border=4pt]{standalone}
+\usepackage[siunitx]{circuitikz}
+\begin{document}
+\begin{circuitikz}[scale=1, transform shape, line width=0.6pt]
+\ctikzset{tripoles/mos style/arrows}
+% rails
+\draw (-1.2,5.2) -- (10.8,5.2) node[right] {$V_{DD}$};
+% taps from the TIA
+\draw (-1.2,3.6) node[left] {$V_{OUT}$} to[R, l=$R_{t1}$, *-] (0.6,3.6) coordinate (to);
+\draw (to) to[C, l_=$C_{t1}$] (0.6,2.2) node[ground] {};
+% replica follower Mr with sink Mns
+\draw (2.2,3.6) node[nmos] (Mr) {};
+\draw (to) -- (Mr.G);
+\draw (Mr.D) -- (2.2,5.2);
+\draw (2.2,1.4) node[nmos] (Mns) {};
+\draw (Mr.S) -- (Mns.D);
+\draw (Mns.S) node[ground] {};
+\draw (Mns.G) -- ++(-0.3,0) node[left] {$I_{th}/2$};
+\node[right] at (2.45,3.6) {$M_r$}; \node[right] at (2.45,1.4) {$M_{ns}$};
+\draw (2.2,2.5) node[circ] {} -- (4.2,2.5) node[above left] {$V_R$} coordinate (vr);
+% input tap
+\draw (-1.2,-0.6) node[left] {$V_{IN}$} to[R, l=$R_{t2}$, *-] (0.6,-0.6) coordinate (ti);
+\draw (ti) to[C, l_=$C_{t2}$] (0.6,-2.0) node[ground] {};
+\draw (ti) -- (4.2,-0.6) -- (4.2,1.4) coordinate (tip);
+% OTA
+\draw (5.4,2.0) node[op amp, scale=0.9] (ota) {};
+\draw (vr) |- (ota.-); \draw (tip) |- (ota.+);
+\node at (5.4,3.0) {OTA};
+\draw (ota.out) -- (7.2,2.0) node[circ] {} node[above] {$V_X$} coordinate (vx);
+\draw (vx) to[C, l_=$C_{int}$] (7.2,0.4) node[ground] {};
+% cancellation device
+\draw (10.0,0.0) node[nmos] (Mdc) {};
+\draw (vx) -- (8.8,2.0) |- (Mdc.G);
+\draw (Mdc.S) node[ground] {};
+\draw (Mdc.D) -- (10.0,1.4) node[above] {to $V_{IN}$};
+\node[right] at (10.25,0) {$M_{dc}$};
+\end{circuitikz}
+\end{document}

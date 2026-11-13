@@ -1,0 +1,52 @@
+* Proposed TIA with DC-cancellation loop (holds the follower current; set idc = average photocurrent), PTM 90 nm BSIM4
+* LTspice: File > Open (All files) > this .net, then Run.
+* One analysis at a time: keep one of the lines below active, comment the others with ";".
+.include ptm90.lib
+.param vdd=1.0 cpd=50f cout=30f iref=50u vtune=0.28 rn=5k rb=4.2k ca=30f cb=2p rtap=100k ctap=0.2p cint=2p idc=100u
+.temp 35
+
+Vdd vdd 0 dc {vdd}
+Vtune vt 0 dc {vtune}
+Iref vbp 0 dc {iref}
+Mbp vbp vbp vdd vdd pmos90 W=2u L=180n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Mbr vb1 vbp vdd vdd pmos90 W=2u L=180n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Mbn vb1 vb1 vr 0 nmos90 W=0.4u L=90n AD=0.08p AS=0.08p PD=1.2u PS=1.2u
+Rb vr 0 {rb}
+Cb vb1 0 {cb}
+Rn vdd n {rn}
+M1 n vb1 in 0 nmos90 W=4.5u L=90n AD=0.9p AS=0.9p PD=9.4u PS=9.4u
+M2 in n 0 0 nmos90 W=3.5u L=90n AD=0.7p AS=0.7p PD=7.4u PS=7.4u
+M3 out n 0 0 nmos90 W=7u L=90n AD=1.4p AS=1.4p PD=14.4u PS=14.4u
+M3b out vbp vdd vdd pmos90 W=28u L=180n AD=5.6p AS=5.6p PD=56.4u PS=56.4u
+Mf vdd g in 0 nmos90 W=3.5u L=90n AD=0.7p AS=0.7p PD=7.4u PS=7.4u
+Mt g vt out out pmos90 W=12u L=90n AD=2.4p AS=2.4p PD=24.4u PS=24.4u
+Ca g in {ca}
+Mq nq vbp vdd vdd pmos90 W=0.8u L=180n AD=0.16p AS=0.16p PD=2u PS=2u
+Mnq nq nq 0 0 nmos90 W=2u L=1440n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Rt1 out to {rtap}
+Ct1 to 0 {ctap}
+Rt2 in ti {rtap}
+Ct2 ti 0 {ctap}
+Mr vdd to vrep 0 nmos90 W=1.75u L=90n AD=0.35p AS=0.35p PD=3.9u PS=3.9u
+Mns vrep nq 0 0 nmos90 W=5.7u L=1440n AD=1.14p AS=1.14p PD=11.8u PS=11.8u
+Mtp tp vbp vdd vdd pmos90 W=0.4u L=720n AD=0.08p AS=0.08p PD=1.2u PS=1.2u
+Ma oa ti tp vdd pmos90 W=4u L=720n AD=0.8p AS=0.8p PD=8.4u PS=8.4u
+Mb vx vrep tp vdd pmos90 W=4u L=720n AD=0.8p AS=0.8p PD=8.4u PS=8.4u
+Mna oa oa 0 0 nmos90 W=1u L=1440n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Mnb vx oa 0 0 nmos90 W=1u L=1440n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cint vx 0 {cint}
+Mdc in vx 0 0 nmos90 W=6u L=180n AD=1.2p AS=1.2p PD=12.4u PS=12.4u
+Cpd in 0 {cpd}
+Cout out 0 {cout}
+Iin 0 in dc {idc} ac 1
+
+.ac dec 40 10Meg 200G
+;.noise V(out) Iin dec 40 10Meg 200G
+;.op
+.meas AC zt0 FIND mag(V(out)) AT 100Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+;.step param idc list 0 100u 300u 500u   ; average photocurrent sweep (DCC holds the bandwidth)
+;.ac dec 20 1k 200G   ; to see the low-frequency corner set by the DCC loop
+.backanno
+.end

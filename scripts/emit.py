@@ -3,13 +3,26 @@ import os, shutil
 import circuits as C
 
 NL = os.path.join(C.ROOT, 'netlists')
-TITLE = {'base': 'Baseline TIA - Alsheikhjader 2020 Fig. 1 (passive Lf = 2.4 nH), PTM 90 nm BSIM4',
-         'prop': 'Proposed TIA - FVF input + current mirror + tunable active-inductor feedback, PTM 90 nm BSIM4'}
-FNAME = {'base': 'baseline_tia', 'prop': 'proposed_tia'}
+TITLE = {'base': 'Baseline TIA - Alsheikhjader 2020 Fig. 1 as drawn (passive Lf = 2.4 nH), PTM 90 nm BSIM4',
+         'prop': 'Proposed TIA - FVF input + current mirror + tunable active-inductor feedback, PTM 90 nm BSIM4',
+         'dcc': 'Proposed TIA with DC-cancellation loop (holds the follower current; set idc = average photocurrent), PTM 90 nm BSIM4',
+         'base_gain': 'Baseline topology re-optimised for maximum bandwidth at the proposed gain (fair comparison), PTM 90 nm BSIM4',
+         'base_gbw': 'Baseline topology re-optimised for maximum gain-bandwidth product (fair comparison), PTM 90 nm BSIM4'}
+FNAME = {'base': 'baseline_tia', 'prop': 'proposed_tia', 'dcc': 'proposed_tia_dcc',
+         'base_gain': 'baseline_reopt_gain', 'base_gbw': 'baseline_reopt_gbw'}
+CIRCS = ['base', 'base_gain', 'base_gbw', 'prop', 'dcc']
 
 
 def get(circ):
-    return (C.baseline(), C.BASE_P) if circ == 'base' else (C.proposed(), C.PROP_P)
+    if circ == 'base':
+        return C.baseline(), C.BASE_P
+    if circ == 'prop':
+        return C.proposed(), C.PROP_P
+    if circ == 'dcc':
+        el = [(e[:4] + ('{idc}', e[5])) if e[1] == 'Iin' else e for e in C.proposed_dcc()]
+        return el, dict(C.PROP_P, **C.DCC_P, idc='100u')
+    r = C.BASE_REOPT[circ.split('_')[1]]
+    return C.baseline_reopt(circ.split('_')[1]), dict(C.BASE_P, **r['P'], vg2b=r['vg2b'], rsl=r['rsl'])
 
 
 # ----------------------------------------------------------------------------- ngspice
@@ -21,7 +34,7 @@ def ngspice(circ):
          '.include ../../models/ptm90.lib', C.param_line(P), f".temp {P['temp']}", '']
     L += C.spice_lines(el)
     L += ['', '.control', 'set noaskquit', 'op',
-          'print v(in) v(out) v(n) i(vdd)' + (' v(g) v(vb1) v(vbp)' if circ == 'prop' else ''),
+          'print v(in) v(out) v(n) i(vdd)' + (' v(g) v(vb1) v(vbp)' if circ in ('prop', 'dcc') else '') + (' v(vx) v(vrep)' if circ == 'dcc' else ''),
           'print ' + ' '.join(f'@{m}[id]' for m in mos), 'print ' + ' '.join(f'@{m}[gm]' for m in mos),
           'ac dec 40 10meg 200g', 'let zt_db = vdb(out)', 'meas ac zt_100MHz find zt_db at=100meg',
           'meas ac zt_peak max zt_db', 'let zt_m3 = zt_100MHz - 3',
@@ -44,6 +57,9 @@ def ltspice_net(circ):
           '.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1']
     if circ == 'prop':
         L += [';.step param vtune 0 0.32 0.04   ; bandwidth tuning sweep']
+    if circ == 'dcc':
+        L += [';.step param idc list 0 100u 300u 500u   ; average photocurrent sweep (DCC holds the bandwidth)',
+              ';.ac dec 20 1k 200G   ; to see the low-frequency corner set by the DCC loop']
     L += ['.backanno', '.end', '']
     open(os.path.join(NL, 'ltspice', FNAME[circ] + '.net'), 'w').write('\n'.join(L))
 
@@ -125,12 +141,21 @@ PLACE = {
     'base': {'Vdd': (-400, 64), 'Vg3b': (-240, 64), 'Iin': (-400, 384), 'Cpd': (-256, 384),
              'M2b': (16, 0), 'M1': (16, 208), 'M2': (16, 416), 'Lf': (256, 224),
              'M3b': (480, 0), 'M3': (480, 416), 'Cout': (720, 384)},
+    'base_re': {'Vdd': (-400, 64), 'Vg3b': (-240, 64), 'Vg2b': (-560, 64), 'Iin': (-400, 384), 'Cpd': (-256, 384),
+                'M2b': (16, 0), 'M1': (16, 208), 'M2': (16, 416), 'Lf': (256, 192), 'Rsl': (256, 400),
+                'M3b': (480, 0), 'M3': (480, 416), 'Cout': (720, 384)},
     'prop': {'Vdd': (-720, 64), 'Vtune': (-560, 64), 'Iref': (-720, 320), 'Mbp': (-416, 0), 'Mbr': (-208, 0),
              'Mbn': (-208, 208), 'Rb': (-176, 400), 'Cb': (-64, 256),
              'Iin': (-720, 560), 'Cpd': (-560, 560),
              'Rn': (48, 16), 'M1': (16, 208), 'M2': (16, 416), 'Mf': (256, 208), 'Ca': (272, 400),
              'Mt': (448, 208), 'M3b': (688, 0), 'M3': (688, 416), 'Cout': (928, 400)},
 }
+PLACE['base_gain'] = PLACE['base_gbw'] = PLACE.pop('base_re')
+PLACE['dcc'] = dict(PLACE['prop'], **{
+    'Mq': (1200, 0), 'Mtp': (1440, 0), 'Rt1': (1680, 0), 'Rt2': (1920, 0),
+    'Mr': (1200, 240), 'Ma': (1440, 240), 'Mb': (1680, 240), 'Ct1': (1920, 256),
+    'Mnq': (1200, 480), 'Mna': (1440, 480), 'Mnb': (1680, 480), 'Ct2': (1920, 496),
+    'Mns': (1200, 720), 'Mdc': (1440, 720), 'Cint': (1680, 736)})
 
 
 def asc_items(circ):
@@ -178,6 +203,7 @@ def ltspice_asc(circ):
               ';.noise V(out) Iin dec 40 10Meg 200G', '!.meas AC zt0 FIND mag(V(out)) AT 100Meg',
               '!.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1'] + \
              ([';.step param vtune 0 0.32 0.04'] if circ == 'prop' else []) + \
+             ([';.step param idc list 0 100u 300u 500u'] if circ == 'dcc' else []) + \
              [f';{TITLE[circ]}', ';Nets are joined by label (same name = same net). Transimpedance = V(out) for the 1 A AC source Iin.']:
         L.append(f'TEXT -720 {ty} Left 2 {t}'); ty += 32
     open(os.path.join(NL, 'ltspice', FNAME[circ] + '.asc'), 'w').write('\n'.join(L) + '\n')
@@ -242,11 +268,18 @@ def spectre(circ):
     if circ == 'prop':
         L += ['// bandwidth tuning sweep', 'swVt sweep param=vtune start=0 stop=0.32 step=0.04 {',
               '    acTune ac start=10M stop=200G dec=40', '}']
+    if circ == 'dcc':
+        L += ['// average-photocurrent sweep: the DC-cancellation loop holds the bandwidth',
+              'swIdc sweep param=idc values=[0 100u 300u 500u] {', '    acIdc ac start=1k stop=200G dec=20', '}',
+              '// photocurrent step 0 -> 200 uA -> 0 on top of idc: settling of the cancellation loop',
+              'Istep (0 in) isource type=pwl wave=[0 0 1u 0 1.001u 200u 6u 200u 6.001u 0]',
+              'tranStep tran stop=11u maxstep=2n']
     open(os.path.join(NL, 'cadence', FNAME[circ] + '.scs'), 'w').write('\n'.join(L) + '\n')
 
 
 # ----------------------------------------------------------------------------- Virtuoso SKILL
-SKILL_HEAD = r''';; Builds Virtuoso schematics of the baseline and proposed TIAs from analogLib parts.
+SKILL_HEAD = r''';; Builds Virtuoso schematics of every TIA in this project from analogLib parts: the baseline as
+;; drawn, the two re-optimised baselines, the proposed TIA and the proposed TIA with DC cancellation.
 ;; Usage in the CIW:   load("build_tia_schematics.il")   tiaBuildAll("TIA_LIB")
 ;; The library TIA_LIB must already exist (File > New > Library, no tech file needed).
 ;; Devices are analogLib nmos4/pmos4 with model names nmos90/pmos90: add ptm90.lib under
@@ -274,7 +307,7 @@ procedure( tiaPlace(cv cell name x y props nets)
 
 def skill():
     L = [SKILL_HEAD]
-    for circ in ('base', 'prop'):
+    for circ in CIRCS:
         el, P = get(circ)
         L.append(f'procedure( tiaBuild_{FNAME[circ]}(lib)\n  let( (cv)\n    cv = dbOpenCellViewByType(lib "{FNAME[circ]}" "schematic" "schematic" "w")')
         net = lambda n: 'gnd!' if n == '0' else n
@@ -301,11 +334,11 @@ def skill():
             L.append(f'    tiaPlace(cv "{cell}" "{name}" {x:g} {y:g} list({ps}) list({ns}))')
         L.append('    schCheck(cv)\n    dbSave(cv)\n    dbClose(cv)\n    t))\n')
         L.append(f';; design variables for {FNAME[circ]}: ' + ', '.join(f'{k}={v}' for k, v in P.items()))
-    L.append('procedure( tiaBuildAll(lib) tiaBuild_baseline_tia(lib) tiaBuild_proposed_tia(lib) )\n')
+    L.append('procedure( tiaBuildAll(lib) ' + ' '.join(f'tiaBuild_{FNAME[c]}(lib)' for c in CIRCS) + ' )\n')
     open(os.path.join(NL, 'cadence', 'build_tia_schematics.il'), 'w').write('\n'.join(L))
     ocn = ''';; OCEAN: plot results of a Spectre run of the netlists in this folder.
 ;; First run:  spectre proposed_tia.scs   (and/or baseline_tia.scs), then in the CIW or `ocean`:  load("plot_results.ocn")
-foreach( name '("baseline_tia" "proposed_tia")
+foreach( name '("baseline_tia" "baseline_reopt_gain" "baseline_reopt_gbw" "proposed_tia" "proposed_tia_dcc")
   when( isDir(strcat("./" name ".raw"))
     openResults(strcat("./" name ".raw"))
     selectResult('acZt)
@@ -327,7 +360,7 @@ def emit_all():
     open(os.path.join(NL, 'ltspice', 'tia_pmos4.asy'), 'w').write(ASY_P)
     for d in ('ltspice', 'cadence'):
         shutil.copy(C.MODEL, os.path.join(NL, d, 'ptm90.lib'))
-    for circ in ('base', 'prop'):
+    for circ in CIRCS:
         ngspice(circ); ltspice_net(circ); ltspice_asc(circ); asc_netlist_check(circ); spectre(circ)
     skill()
 

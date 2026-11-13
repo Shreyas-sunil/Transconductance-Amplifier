@@ -35,10 +35,13 @@ def corner_extra(elems, corner='TT', mismatch=None):
 
 def build(circ='prop', P=None, sz=None, corner='TT', mismatch=None, rscale=1.0,
           cscale=1.0, control='', extra_lines=(), replace=None):
-    elems = C.proposed(sz) if circ == 'prop' else C.baseline(sz)
+    elems = {'prop': C.proposed, 'base': C.baseline, 'dcc': C.proposed_dcc}[circ](sz)
     if replace:
         elems = replace(elems)
-    p = dict(C.PROP_P if circ == 'prop' else C.BASE_P); p.update(P or {})
+    p = dict(C.BASE_P if circ == 'base' else C.PROP_P)
+    if circ == 'dcc':
+        p.update(C.DCC_P)
+    p.update(P or {})
     ex = corner_extra(elems, corner, mismatch)
     lines = [f'* {circ} TIA (auto-generated)', f'.include {C.MODEL}', C.param_line(p),
              f".temp {p['temp']}"]
@@ -77,9 +80,10 @@ def acnoise(circ='prop', P=None, noise=True, fstart='10meg', fstop='200g', ppd=4
             ops=None, **kw):
     """Operating point + AC transimpedance (+ input-referred noise)."""
     t = os.path.join(TMP, f'd{os.getpid()}_{next(_cnt)}')
-    mos = {'prop': ['m1', 'm2', 'm3', 'm3b', 'mf', 'mt'], 'base': ['m1', 'm2', 'm3', 'm2b', 'm3b']}[circ]
+    mos = {'prop': ['m1', 'm2', 'm3', 'm3b', 'mf', 'mt'], 'base': ['m1', 'm2', 'm3', 'm2b', 'm3b'],
+           'dcc': ['m1', 'm2', 'm3', 'm3b', 'mf', 'mt', 'mdc', 'mr', 'mns', 'mtp', 'ma', 'mb']}[circ]
     ops = ops or ['id', 'gm', 'gds', 'vds', 'vdsat', 'vgs', 'vth', 'gmbs']
-    ctl = ['op', 'print v(in) v(out) v(n) i(vdd)' + (' v(g) v(vb1) v(vbp)' if circ == 'prop' else '')]
+    ctl = ['op', 'print v(in) v(out) v(n) i(vdd)' + (' v(g) v(vb1) v(vbp)' if circ != 'base' else '') + (' v(vrep) v(ti) v(to) v(vx) v(tp) v(oa)' if circ == 'dcc' else '')]
     for o in ops:
         ctl.append('print ' + ' '.join(f'@{m}[{o}]' for m in mos))
     ctl += [f'ac dec {ppd} {fstart} {fstop}', f'wrdata {t}_ac.txt vdb(out) vp(out) vdb(in)']

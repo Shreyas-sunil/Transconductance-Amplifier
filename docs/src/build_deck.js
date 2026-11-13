@@ -62,8 +62,17 @@ const THEME = { name: 'TIA', headFontFace: 'Cambria', bodyFontFace: 'Calibri',
   stat(s, 0.6, 3.25, 2.9, `${N.BPk} dB`, `peak at ${N.BFpk} GHz`, C.accent2);
   stat(s, 0.6, 4.9, 2.9, `${N.BIOne} nA`, 'bias current in M1: it is a triode switch', C.accent2);
   await pic(s, 'fig_baseline_reproduction.png', 3.9, 1.6, 8.8, 3.6, 'Reference re-simulation');
-  T(s, 'With the gates of M1 and M2b at VDD, M2b is off and M1 has no current. The gain is 1/(gm2 + gm3 + …) = ' + N.BZtOhm + ' Ω until the inductor resonates. The cause of the gap to the published curve cannot be established without the original model.', { x: 3.9, y: 5.35, w: 8.8, h: 1.2, fontSize: 14, color: C.text2 });
+  T(s, 'With the gates of M1 and M2b at VDD, M2b is off and M1 has no current. The gain is 1/(gm2 + gm3 + …) = ' + N.BZtOhm + ' Ω until the inductor resonates.', { x: 3.9, y: 5.35, w: 8.8, h: 1.2, fontSize: 14, color: C.text2 });
   s.addNotes('Points from the published figures are digitised and approximate.');
+
+  s = pres.addSlide({ masterName: 'Content', sectionTitle: 'Reference re-examined' });
+  s.addText('The published curve is the circuit without its inductor', { placeholder: 'title' });
+  await pic(s, 'fig_baseline_diagnosis.png', 0.6, 1.55, 12.1, 3.9, 'Baseline diagnosis');
+  bullets(s, [`With 2.4 nH, nothing fits better than ${N.DgRmsBestL} dB rms (any bias, spiral loss, capacitance), and it always resonates.`,
+              `Below about ${N.DgLfMax} pH of feedback inductance, at a fifth of the drawn bias, the fit is ${N.DgRmsNoL} dB rms.`,
+              `Fair reference: re-optimised under the same rules, the baseline reaches ${N.RgBw} GHz at the proposed gain (proposed: ${N.PBW} GHz), but uses ${N.RgPow} mW and ${N.RgInFive} pA/√Hz.`],
+            { x: 0.6, y: 5.5, w: 12.1, h: 1.35, fontSize: 14 });
+  s.addNotes('Each hypothesis was fitted with the photodiode and load capacitances free. A unit error on the inductor would explain the published curve, but only the original files could confirm it. At its own best point the re-optimised baseline has a gain-bandwidth product of ' + N.RbGbw + ' THz·Ω at ' + N.RbPow + ' mW, against ' + N.PGbw + ' at ' + N.PPow + ' mW for the proposed circuit.');
 
   pres.addSection({ title: 'Proposed circuit' });
   s = pres.addSlide({ masterName: 'Content', sectionTitle: 'Proposed circuit' });
@@ -126,10 +135,20 @@ const THEME = { name: 'TIA', headFontFace: 'Cambria', bodyFontFace: 'Calibri',
               `12.5 Gb/s: ${N.EyePTwH} mV and ${N.EyePTwW} %; the reference closes to ${N.EyeBTwW} % horizontally because of ringing.`,
               'PRBS-7, 100 µA peak-to-peak input, no noise added.'], { x: 9.3, y: 1.6, w: 3.4, h: 4.9, fontSize: 15 });
 
+  s = pres.addSlide({ masterName: 'Content', sectionTitle: 'Results' });
+  s.addText(`DC cancellation: bandwidth held up to ${N.DcLimit} µA of photocurrent`, { placeholder: 'title' });
+  await pic(s, 'fig_dcc.png', 0.6, 1.5, 7.4, 5.3, 'DC cancellation');
+  stat(s, 8.4, 1.6, 4.3, `${N.PrLimit} → ${N.DcLimit} µA`, 'average photocurrent, gain ±1 dB, bandwidth −10 %');
+  bullets(s, [`A replica follower and an OTA hold the follower current near 105 µA; Mdc sinks the photocurrent.`,
+              `Cost: ${N.DcPowAdd} µW, +${N.DcNoisePct} % noise at 5 GHz, 2.4 pF of capacitance.`,
+              `Phase margin ≥ ${N.DcPmMin}°; low-frequency corner ${N.DcFloDark} kHz to ${N.DcFloMax} MHz.`,
+              `Monte Carlo: ${N.DcMcBwMean} ± ${N.DcMcBwStd} GHz at 300 µA; ${N.DcMcPkN} of ${N.DcMcN} samples need a Vtune trim.`], { x: 8.4, y: 3.3, w: 4.3, h: 3.5, fontSize: 14 });
+  s.addNotes('Without the loop, every microampere of photocurrent is taken from the follower until it cuts off. The threshold is set above the dark follower current so the loop is always engaged; a version with the threshold below failed Monte Carlo.');
+
   pres.addSection({ title: 'Limits and next steps' });
   s = pres.addSlide({ masterName: 'Content', sectionTitle: 'Limits and next steps' });
   s.addText('What the active inductor does not do', { placeholder: 'title' });
-  const cards = [['Input overload', `Mf carries ${N.IF} µA. Gain rises ${N.OvA} dB at 25 µA of average input current and the feedback is lost near 100 µA. Needs a DC-cancellation loop.`],
+  const cards = [['Power and noise against a fair baseline', `Re-optimised for the same gain, the baseline topology uses ${N.RgPow} mW and ${N.RgInFive} pA/√Hz, but reaches only ${N.RgBw} GHz. The gain is in bandwidth, not efficiency.`],
                  ['No extra bandwidth at light load', `Plain follower feedback reaches ${N.LdResLight} GHz against ${N.LdAiLight} GHz. The zero only helps at heavy load: ${N.LdRatioHeavy}× at 250 fF.`],
                  ['Slow corners stay slow', 'Trimming removes peaking and reins in fast corners, but cannot restore bandwidth lost by the input stage.'],
                  ['Simulation only', 'Predictive model, no layout parasitics, ideal reference current, synthetic corners. Post-layout and silicon results are still to come.']];
@@ -143,19 +162,21 @@ const THEME = { name: 'TIA', headFontFace: 'Cambria', bodyFontFace: 'Calibri',
   const hdr = ['Work', 'Process, supply', 'Gain (dBΩ)', 'Bandwidth (GHz)', 'Power (mW)', 'Inductor', 'Tunable'];
   const rows = [['Alsheikhjader 2020, as published', '90 nm, 1 V', '43.92', '5–15 (flat band)', 'n/r', 'spiral 2.4 nH', 'no'],
                 ['Same circuit, re-simulated here', '90 nm PTM, 1 V', N.BZt, `${N.BFlat} (±1 dB)`, N.BPow, 'spiral 2.4 nH', 'no'],
+                ['Same topology, re-optimised here', '90 nm PTM, 1 V', N.RgZt, N.RgBw, N.RgPow, `spiral ${N.RgLf} nH`, 'no'],
                 ['Zohoori et al. 2018', '90 nm, 1 V', '40.5', '7', '1.4', 'active, load', 'no'],
                 ['Alsheikhjader & Issa 2024', '45 nm, 1 V', '68.2', '2.5', '0.56', 'active, local', 'no'],
                 ['Shaaban et al. 2025', '45 nm, 1 V', '30.6', '2.8', '1.63', 'shunt peaking', 'no'],
                 ['Hwang et al. 2006 (silicon)', '0.18 µm, 2 V', '52', '3.9–7.6', '34', 'none', 'yes'],
                 ['Chien et al. 2010 (silicon)', '0.18 µm, 1.8 V', '47.8', '6.2–10.5', '33.3', 'passive', 'yes'],
-                ['This work (simulated)', '90 nm PTM, 1 V', N.PZt, `${N.TuneMin}–${N.TuneMax}`, N.PPow, 'active, global', 'yes']];
+                ['This work (simulated)', '90 nm PTM, 1 V', N.PZt, `${N.TuneMin}–${N.TuneMax}`, N.PPow, 'active, global', 'yes'],
+                ['This work + DC cancellation', '90 nm PTM, 1 V', N.DcZtDark, N.DcBwDark, N.DcPow, 'active, global', 'yes']];
   const cell = (t, o = {}) => ({ text: String(t), options: { fontSize: 13, color: C.text1, valign: 'middle', ...o } });
-  s.addTable([hdr.map(h => cell(h, { bold: true, fill: { color: C.background2 } }))].concat(rows.map((r, i) => r.map(c => cell(c, i === rows.length - 1 ? { bold: true, color: C.accent1 } : {})))),
-    { x: 0.6, y: 1.6, w: 12.1, colW: [3.5, 1.9, 1.3, 1.9, 1.2, 1.4, 0.9], rowH: 0.44, border: { type: 'solid', pt: 0.5, color: 'C9CED8' }, objectName: 'comparison table' });
+  s.addTable([hdr.map(h => cell(h, { bold: true, fill: { color: C.background2 } }))].concat(rows.map((r, i) => r.map(c => cell(c, i >= rows.length - 2 ? { bold: true, color: C.accent1 } : {})))),
+    { x: 0.6, y: 1.5, w: 12.1, colW: [3.5, 1.9, 1.3, 1.9, 1.2, 1.4, 0.9], rowH: 0.38, border: { type: 'solid', pt: 0.5, color: 'C9CED8' }, objectName: 'comparison table' });
   T(s, 'Tunable TIAs already exist in silicon; what is new here is narrow: an active inductor as global feedback in a current-mirror TIA, with one voltage for both tuning and PVT trimming at 1 V. Other works: authors’ figures under their own conditions. n/r: not reported.', { x: 0.6, y: 5.75, w: 12.1, h: 0.9, fontSize: 13, color: C.text2 });
 
   s = pres.addSlide({ masterName: 'Dark', sectionTitle: 'Limits and next steps' });
-  s.addText('Next: DC-cancellation loop, foundry kit, layout, silicon', { placeholder: 'title' });
+  s.addText('Next: foundry kit, layout, bandgap reference, silicon', { placeholder: 'title' });
   s.addText([{ text: 'Repository: netlists for ngspice, LTspice and Spectre, a Virtuoso SKILL builder, all scripts and raw data, the paper in LaTeX and Word.', options: { breakLine: true } },
              { text: 'Every number in this deck is regenerated by scripts/run_all.py.' }], { placeholder: 'body' });
 

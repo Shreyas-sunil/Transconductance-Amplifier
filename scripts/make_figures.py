@@ -216,7 +216,74 @@ def fig_load():
     fig.tight_layout(); save(fig, 'fig_load_pd_overload')
 
 
-ALL = [fig_baseline, fig_compare, fig_vtune, fig_ai, fig_noise, fig_model, fig_loop, fig_pvt, fig_mc, fig_eye, fig_load]
+def fig_baseline_diag():
+    b = L('ac_baseline.csv'); h5 = L('diag_H5.csv'); h6 = L('diag_H6.csv')
+    dg = {r['label']: r for r in Jl('baseline_diag.json')}; sc = Jl('baseline_lfscan.json')
+    ro = Jl('baseline_reopt.json'); p = L('ac_proposed.csv')
+    g1, g2 = L('ac_baseline_opt_gbw.csv'), L('ac_baseline_opt_gain.csv')
+    fig, ax = plt.subplots(1, 3, figsize=(7.4, 2.75))
+    a = ax[0]
+    a.plot(P_F, P_Z, 'o', color=INK, ms=4, mfc='white', label='Published [1] (digitised)', zorder=5)
+    a.plot(b['freq_Hz'] / 1e9, 10 ** (b['Zt_dBohm'] / 20), color=ORANGE, lw=1.3, label='As drawn, 50/30 fF')
+    a.plot(h5['freq_Hz'] / 1e9, 10 ** (h5['Zt_fitted_caps_dBohm'] / 20), color=VIOLET, ls='--', lw=1.3,
+           label='Best fit, L$_f$ = 2.4 nH (%.1f dB rms)' % dg['H5']['rms_db'])
+    a.plot(h6['freq_Hz'] / 1e9, 10 ** (h6['Zt_fitted_caps_dBohm'] / 20), color=AQUA, lw=1.6,
+           label='Best fit, L$_f$ → 0 (%.1f dB rms)' % dg['H6']['rms_db'])
+    a.set_xlim(0, 50); a.set_ylim(0, 450); a.set_xlabel('Frequency (GHz)'); a.set_ylabel('|Z$_T$| (Ω)')
+    a.set_title('(a) Fits to the published curve'); a.legend(fontsize=5.8, loc='upper right')
+    a = ax[1]
+    lf = np.array([r['lf'] for r in sc]); e = np.array([r['rms_db'] for r in sc])
+    a.semilogx(lf * 1e9, e, color=BLUE, marker='o', ms=3.5)
+    i = np.argmin(abs(lf - 2.4e-9)); a.plot(lf[i] * 1e9, e[i], 'o', color=ORANGE, ms=6, mfc='none', mew=1.5)
+    a.annotate('stated 2.4 nH', (lf[i] * 1e9, e[i]), xytext=(-62, 4), textcoords='offset points', fontsize=6.5, color=ORANGE)
+    a.set_xlabel('Feedback inductance L$_f$ (nH)'); a.set_ylabel('Best rms fit error (dB)')
+    a.set_ylim(0, 4.6); a.set_title('(b) Fit error versus L$_f$')
+    a = ax[2]
+    for d, lab, col, ls in ((b, 'As drawn', ORANGE, ':'), (g1, 'Re-optimised, max GBW', VIOLET, '--'),
+                            (g2, 'Re-optimised, gain-matched', AQUA, '-.'), (p, 'Proposed', BLUE, '-')):
+        a.semilogx(d['freq_Hz'] / 1e9, d['Zt_dBohm'], color=col, ls=ls, lw=1.5, label=lab)
+    a.set_xlim(0.1, 60); a.set_ylim(25, 62); a.set_xlabel('Frequency (GHz)'); a.set_ylabel('Z$_T$ (dBΩ)')
+    a.set_title('(c) Fair comparison (50/30 fF)'); a.legend(fontsize=5.8, loc='lower left')
+    fig.tight_layout(); save(fig, 'fig_baseline_diagnosis')
+
+
+def fig_dcc():
+    d = Jl('dcc_idc.json'); st_p, st_d = L('dcc_step_prop.csv'), L('dcc_step_dcc.csv')
+    fig, ax = plt.subplots(2, 2, figsize=(7.2, 5.0))
+    i_p = [r['idc_uA'] for r in d['prop']]; i_d = [r['idc_uA'] for r in d['dcc']]
+    a = ax[0, 0]
+    a.plot(i_p, [r['f3'] / 1e9 for r in d['prop']], color=ORANGE, ls='--', marker='s', ms=3, label='Without DCC')
+    a.plot(i_d, [r['f3'] / 1e9 for r in d['dcc']], color=BLUE, marker='o', ms=3, label='With DCC')
+    a.set_xlabel('Average photocurrent (µA)'); a.set_ylabel('−3 dB bandwidth (GHz)'); a.set_ylim(0, 16)
+    a.set_title('(a) Bandwidth'); a.legend(fontsize=7)
+    a2 = a.twinx(); a2.spines['right'].set_visible(True)
+    a2.plot(i_p, [r['z0db'] for r in d['prop']], color=ORANGE, ls=':', lw=1.1)
+    a2.plot(i_d, [r['z0db'] for r in d['dcc']], color=BLUE, ls=':', lw=1.1)
+    a2.set_ylabel('Gain at 100 MHz (dBΩ), dotted', color=MUTED); a2.set_ylim(25, 75); a2.grid(False)
+    a = ax[0, 1]
+    a.plot(i_p, [r['imf'] * 1e6 for r in d['prop']], color=ORANGE, ls='--', marker='s', ms=3, label='I(M$_f$), without DCC')
+    a.plot(i_d, [r['imf'] * 1e6 for r in d['dcc']], color=BLUE, marker='o', ms=3, label='I(M$_f$), with DCC')
+    a.plot(i_d, [r['idcc'] * 1e6 for r in d['dcc']], color=AQUA, marker='^', ms=3, label='I(M$_{dc}$), cancelled')
+    a.plot([0, 1000], [0, 1000], color=GRID, lw=1, zorder=0)
+    a.set_xlabel('Average photocurrent (µA)'); a.set_ylabel('Current (µA)'); a.set_ylim(0, 850)
+    a.set_title('(b) Follower and cancellation currents'); a.legend(fontsize=7)
+    a = ax[1, 0]
+    a.plot(st_p['time_s'] * 1e6, st_p['vout_V'], color=ORANGE, lw=1.3, label='Without DCC')
+    a.plot(st_d['time_s'] * 1e6, st_d['vout_V'], color=BLUE, lw=1.6, label='With DCC')
+    a.set_xlabel('Time (µs)'); a.set_ylabel('V$_{OUT}$ (V)'); a.set_ylim(0.3, 0.75)
+    a.set_title('(c) Photocurrent step 0 → 200 µA → 0'); a.legend(fontsize=7, loc='lower right')
+    a = ax[1, 1]
+    for k, col in zip((0, 100, 300, 500), RAMP[1:]):
+        c = L(f'ac_dcc_idc{k}.csv')
+        a.semilogx(c['freq_Hz'], c['Zt_dBohm'], color=col, label=f'{k} µA')
+    c = L('ac_prop_idc100.csv')
+    a.semilogx(c['freq_Hz'], c['Zt_dBohm'], color=ORANGE, ls='--', lw=1.2, label='100 µA, no DCC')
+    a.set_xlim(1e3, 5e10); a.set_ylim(10, 70); a.set_xlabel('Frequency (Hz)'); a.set_ylabel('Z$_T$ (dBΩ)')
+    a.set_title('(d) Response with DCC'); a.legend(fontsize=6.5, loc='lower center', ncol=2)
+    fig.tight_layout(); save(fig, 'fig_dcc')
+
+
+ALL = [fig_baseline_diag, fig_dcc, fig_baseline, fig_compare, fig_vtune, fig_ai, fig_noise, fig_model, fig_loop, fig_pvt, fig_mc, fig_eye, fig_load]
 if __name__ == '__main__':
     want = sys.argv[1:]
     for f in ALL:

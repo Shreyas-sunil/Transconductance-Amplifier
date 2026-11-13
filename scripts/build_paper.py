@@ -78,3 +78,95 @@ open(os.path.join(P, 'table_sizes.tex'), 'w').write('\n'.join(rows) + '\n')
 for f in glob.glob(os.path.join(C.ROOT, 'results', 'figures', '*')):
     shutil.copy(f, os.path.join(P, 'figures'))
 print(len(M), 'macros written')
+
+# ---------------------------------------------------------------- baseline diagnosis, fair baselines, DCC
+import numpy as np
+D = os.path.join(C.ROOT, 'results', 'data')
+jl = lambda n: json.load(open(os.path.join(D, n)))
+M2 = {}
+def put2(k, v, fmt='%.2f'): M2[k] = (fmt % v) if not isinstance(v, str) else v
+dg = {r['label']: r for r in jl('baseline_diag.json')}
+put2('DgRmsDrawn', dg['H0']['rms_db_5030'], '%.1f'); put2('DgRmsFitDrawn', dg['H0']['rms_db'], '%.1f')
+put2('DgRmsMOne', dg['H1']['rms_db'], '%.1f'); put2('DgRmsMTwoB', dg['H2']['rms_db'], '%.1f'); put2('DgRmsLoss', dg['H3']['rms_db'], '%.1f')
+put2('DgRmsBestL', min(dg[k]['rms_db'] for k in ('H0', 'H1', 'H2', 'H3', 'H4', 'H5')), '%.1f')
+put2('DgRsBestL', dg['H5']['rs'], '%.0f'); put2('DgRmsNoL', dg['H6']['rms_db'], '%.1f'); put2('DgVgNoL', dg['H6']['vg3b'], '%.2f')
+put2('DgIdNoL', dg['H6']['id_m2'] * 1e6, '%.0f'); put2('DgPwrNoL', dg['H6']['pwr'], '%.2f' if False else '%.2f')
+M2['DgPwrNoL'] = '%.2f' % (dg['H6']['pwr'] * 1e3)
+sc = jl('baseline_lfscan.json'); emin = min(r['rms_db'] for r in sc)
+put2('DgLfMax', max(r['lf'] for r in sc if r['rms_db'] <= emin + 0.1) * 1e12, '%.0f')
+put2('DgRmsTwoFour', [r for r in sc if abs(r['lf'] - 2.4e-9) < 1e-12][0]['rms_db'], '%.1f')
+scr = jl('baseline_screen.json')
+put2('DgSatMax', max(r['vds_m1'] / 0.1 if False else 0 for r in scr), '%.2f')
+put2('DgVdsRatioMax', max(r['vds_m1'] / r['vdsat_m1'] for r in scr), '%.2f'); put2('DgNScreen', len(scr), '%d')
+put2('DgPkMin', min(r['pk'] for r in scr), '%.1f')
+put2('DgEqNine', 2 * np.pi * 1e9 * 2.4e-9, '%.0f')
+ro = jl('baseline_reopt.json'); g, b2 = ro['baseline_opt_gain'], ro['baseline_opt_gbw']
+nom = jl('nominal.json')['proposed']
+for tag, r in (('Rg', g), ('Rb', b2)):
+    put2(tag + 'Zt', r['z0db'], '%.1f'); put2(tag + 'Bw', r['f3'] / 1e9, '%.1f'); put2(tag + 'Pk', r['pk'], '%.1f')
+    put2(tag + 'Pow', r['pwr'] * 1e3, '%.2f'); put2(tag + 'InFive', r['in5'], '%.1f'); put2(tag + 'Irms', r['irms'] * 1e6, '%.2f')
+    put2(tag + 'Fom', 10 ** (r['z0db'] / 20) * r['f3'] / 1e9 / (r['pwr'] * 1e3), '%.0f')
+    put2(tag + 'Gbw', 10 ** (r['z0db'] / 20) * r['f3'] / 1e12, '%.1f')
+put2('RgLf', 5.036, '%.1f'); put2('RbLf', 1.251, '%.2f'); put2('RgRs', 43.0, '%.0f'); put2('RbRs', 42.8, '%.0f')
+put2('PFomP', nom['z0'] * nom['f3'] / 1e9 / (nom['pwr'] * 1e3), '%.0f'); put2('PGbw', nom['z0'] * nom['f3'] / 1e12, '%.1f')
+put2('BwRatioGain', nom['f3'] / g['f3'], '%.1f')
+di = jl('dcc_idc.json'); dz = di['dcc'][0]; pz = di['prop'][0]
+def limit(rows):
+    z0, f0 = rows[0]['z0db'], rows[0]['f3']
+    ok = [r['idc_uA'] for r in rows if abs(r['z0db'] - z0) <= 1.0 and r['f3'] >= 0.9 * f0]
+    lim = 0
+    for r in rows:
+        if r['idc_uA'] in ok: lim = r['idc_uA']
+        else: break
+    return lim
+put2('DcLimit', limit(di['dcc']), '%d'); put2('PrLimit', limit(di['prop']), '%d')
+put2('DcPow', dz['pwr'] * 1e3, '%.2f'); put2('DcPowAdd', (dz['pwr'] - pz['pwr']) * 1e6, '%.0f')
+put2('DcImfDark', dz['imf'] * 1e6, '%.0f'); put2('DcIdccDark', dz['idcc'] * 1e6, '%.0f'); put2('DcBwDark', dz['f3'] / 1e9, '%.2f')
+put2('DcZtDark', dz['z0db'], '%.1f'); put2('DcFloDark', dz['f_lo'] / 1e3, '%.0f')
+r5 = [r for r in di['dcc'] if r['idc_uA'] == 500][0]; r3 = [r for r in di['dcc'] if r['idc_uA'] == 300][0]
+put2('DcBwFive', r5['f3'] / 1e9, '%.2f'); put2('DcZtFive', r5['z0db'] - dz['z0db'], '%.1f'); put2('DcImfFive', r5['imf'] * 1e6, '%.0f')
+put2('DcBwThree', r3['f3'] / 1e9, '%.2f'); put2('DcImfThree', r3['imf'] * 1e6, '%.0f')
+put2('DcBwHund', [r for r in di['dcc'] if r['idc_uA'] == 100][0]['f3'] / 1e9, '%.2f')
+put2('DcFloMax', max(r['f_lo'] for r in di['dcc'] if r['idc_uA'] <= 500) / 1e6, '%.1f')
+put2('DcPkHfMax', max(r['pk_hf'] for r in di['dcc'] if r['idc_uA'] <= 500), '%.1f')
+put2('DcPkLfMax', max(r['pk_lf'] for r in di['dcc'] if r['idc_uA'] <= 500), '%.1f')
+pr = {r['idc_uA']: r for r in di['prop']}
+put2('PrBwHundred', pr[100]['f3'] / 1e9, '%.1f'); put2('PrBwFifty', pr[50]['f3'] / 1e9, '%.1f')
+ns = {(r['circ'], r['idc_uA']): r for r in jl('dcc_noise.json')}
+put2('DcInFive', ns[('dcc', 0)]['in5'], '%.1f'); put2('DcInFiveThree', ns[('dcc', 300)]['in5'], '%.1f')
+put2('DcNoisePct', 100 * (ns[('dcc', 0)]['in5'] / ns[('prop', 0)]['in5'] - 1), '%.0f')
+put2('ShotThree', np.sqrt(2 * 1.602e-19 * 300e-6) * 1e12, '%.1f')
+lp = jl('dcc_loop.json')
+act = [r for r in lp if r['idc_uA'] <= 500]
+put2('DcPmMin', min(r['pm_deg'] for r in act), '%.0f'); put2('DcFuMin', min(r['f_unity'] for r in act) / 1e3, '%.0f')
+put2('DcFuMax', max(r['f_unity'] for r in act) / 1e6, '%.1f'); put2('DcTzMax', max(r['T0_db'] for r in act), '%.0f')
+put2('DcTzMin', min(r['T0_db'] for r in act), '%.0f')
+stp = jl('dcc_step.json')
+put2('DcSettle', stp['dcc']['settle_s'] * 1e6, '%.1f'); put2('DcDip', -stp['dcc']['dip'] * 1e3, '%.0f')
+put2('DcErr', abs(stp['dcc']['v_after'] - stp['dcc']['v_before']) * 1e3, '%.0f'); put2('PrDrop', (stp['prop']['v_before'] - stp['prop']['v_after']) * 1e3, '%.0f')
+ey = {(r['circ'], r['idc_uA']): r for r in jl('dcc_eye.json')}
+for c, tg in (('prop', 'Pr'), ('dcc', 'Dc')):
+    for i, t2 in ((0, 'Zero'), (100, 'Hund'), (300, 'Three')):
+        put2(tg + 'Eye' + t2, ey[(c, i)]['eye_height_pct'], '%.0f'); put2(tg + 'EyeW' + t2, ey[(c, i)]['eye_width_pct'], '%.0f')
+pv = jl('dcc_pvt.json')
+put2('DcPvtIdccMax', max(r['idc0']['idcc'] for r in pv) * 1e6, '%.0f')
+put2('DcPvtBwMin', min(r['idc300']['f3'] for r in pv) / 1e9, '%.1f')
+put2('DcPvtBwMinB', sorted(r['idc300']['f3'] for r in pv)[1] / 1e9, '%.1f')
+put2('DcPvtN', len(pv), '%d')
+mc = jl('dcc_mc.json')
+f3 = lambda k: np.array([r[k]['f3'] for r in mc]) / 1e9
+put2('DcMcN', len(mc), '%d'); put2('DcMcBwMean', f3('idc300').mean()); put2('DcMcBwStd', f3('idc300').std()); put2('DcMcBwMin', f3('idc300').min())
+put2('DcMcBwDarkMin', f3('idc0').min()); put2('DcMcPrDarkMin', f3('prop0').min())
+put2('DcMcIdccMed', np.median([r['idc0']['idcc'] for r in mc]) * 1e6, '%.0f'); put2('DcMcIdccMax', max(r['idc0']['idcc'] for r in mc) * 1e6, '%.0f')
+put2('DcMcImfStd', np.std([r['idc300']['imf'] for r in mc]) * 1e6, '%.0f')
+put2('DcMcPkMax', max(r['idc0']['pk'] for r in mc), '%.1f'); put2('DcMcPrPkMax', max(r['prop0']['pk'] for r in mc), '%.1f')
+put2('DcMcZtStd', np.std([r['idc0']['z0db'] for r in mc]), '%.1f'); put2('DcMcPrZtStd', np.std([r['prop0']['z0db'] for r in mc]), '%.1f')
+put2('DcMcImfDarkStd', np.std([r['prop0']['imf'] for r in mc]) * 1e6, '%.0f')
+put2('DcMcPkN', sum(r['idc0']['pk'] > 1 for r in mc), '%d')
+tr = jl('dcc_mc_trim.json')
+put2('DcTrBwMin', min(r['f3'] for r in tr) / 1e9, '%.1f'); put2('DcTrBwThree', min(r['f3_300'] for r in tr) / 1e9, '%.1f')
+put2('DcTrPkThree', max(r['pk_300'] for r in tr), '%.1f')
+with open(os.path.join(P, 'numbers.tex'), 'a') as fh:
+    fh.write(''.join('\\newcommand{\\%s}{%s}\n' % kv for kv in M2.items()))
+M.update(M2); json.dump(M, open(os.path.join(C.ROOT, 'results', 'numbers.json'), 'w'), indent=1)
+print(len(M2), 'extra macros'); print(json.dumps(M2, indent=0))
