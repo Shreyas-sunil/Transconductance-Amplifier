@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.aux
+*.log
+*.out
+_docx_src.tex
+*_ac.txt
+*_noise.txt
