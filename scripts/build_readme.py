@@ -10,7 +10,7 @@ feedback, designed and simulated at 1 V with the 90 nm Predictive Technology Mod
 
 The starting point is the TIA of Alsheikhjader (Rafidain J. Sci. 29(1), 2020), which uses a 2.4 nH spiral
 inductor from output back to input. This repository contains (1) a BSIM4 re-simulation of that circuit as
-drawn, (2) a redesigned circuit in which the spiral is replaced by a voltage-tuned active inductor, and
+drawn, (2) a redesigned circuit in which the spiral is replaced by a voltage-tuned active inductor,
 (3) a diagnosis of why the published response cannot be reproduced, (4) two re-optimised versions of the
 baseline topology used as a fair reference, (5) a DC-cancellation loop that removes the input overload
 limit, and (6) everything needed to reproduce the results and the paper.
@@ -93,7 +93,7 @@ response is that of the circuit without effective inductive feedback (`scripts/b
 | `netlists/ltspice/` | `.net` netlists and `.asc` schematics of all five circuits, custom MOS symbols, model card |
 | `netlists/cadence/` | Spectre netlists (`.scs`) of all five, SKILL script that builds all five Virtuoso schematics, OCEAN plot script |
 | `models/ptm90.lib` | PTM 90 nm bulk BSIM4 card (models renamed `nmos90`, `pmos90`) |
-| `scripts/` | `circuits.py` (single source of truth for both circuits), `run_all.py`, `make_figures.py`, emitters |
+| `scripts/` | `circuits.py` (single source of truth for all circuits), `run_all.py`, `make_figures.py`, emitters |
 | `results/data/` | Raw simulation output (CSV, JSON) |
 | `results/figures/` | Every figure, PNG and PDF |
 | `paper/` | `main.tex`, `main.pdf`, `Paper_ActiveInductor_TIA.docx`, figures |
