@@ -6,3 +6,4 @@ __pycache__/
 _docx_src.tex
 *_ac.txt
 *_noise.txt
+!simulations/ltspice/*.log

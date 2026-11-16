@@ -2,7 +2,7 @@
 const fs = require('fs'), path = require('path');
 const pptxgen = require('pptxgenjs');
 const sharp = require('sharp');
-const SK = '/root/.claude/skills/synced/ebbab4a3-5bea-4a44-b55e-5b00a9311385_7867ae44-0674-440a-9684-74fe4dca7128/pptx';
+const SK = process.env.PPTX_THEME_DIR || path.join(__dirname, 'pptx');  // folder containing scripts/apply_theme.js
 const ROOT = path.resolve(__dirname, '..', '..');
 const N = JSON.parse(fs.readFileSync(path.join(ROOT, 'results', 'numbers.json')));
 const S = JSON.parse(fs.readFileSync(path.join(ROOT, 'results', 'summary.json')));
