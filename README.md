@@ -79,7 +79,19 @@ response is that of the circuit without effective inductive feedback (`scripts/b
 - **Trimming cannot recover slow or hot corners.**
 - PTM has no foundry corners; corners here are ±30 mV threshold and ±5 % mobility skews.
 - **Novelty is narrow.** Tunable-bandwidth TIAs (measured in silicon) and active inductors in current-mirror TIAs already exist; see `docs/Literature_Review.md`.
-- LTspice and Cadence files were generated but not run (neither tool was available); only ngspice was run.
+- The Cadence (Spectre/Virtuoso) files have not been run yet. LTspice has been run on three of the circuits (below).
+
+## LTspice check
+
+LTspice 26.1.1, same PTM 90 nm card and conditions. Schematics, waveforms and logs are in `simulations/ltspice/`.
+
+| Circuit | Gain at 100 MHz | Peak | f−3dB | ngspice |
+|---|---|---|---|---|
+| Original (as drawn) | 38.0 dBΩ | 50.0 dBΩ (12.0 dB peaking) | n/a (resonant) | 38.0 dBΩ, 11.8 dB peak |
+| Proposed | 53.87 dBΩ | 53.96 dBΩ | 9.71 GHz | 53.9 dBΩ, 9.69 GHz |
+| Baseline re-optimised, same gain | 53.95 dBΩ | 54.53 dBΩ | 3.63 GHz | 54.0 dBΩ, 3.6 GHz |
+
+The two simulators agree to within 0.2 dB and 0.3 %.
 
 ## Repository layout
 
@@ -87,6 +99,7 @@ response is that of the circuit without effective inductive feedback (`scripts/b
 |---|---|
 | `netlists/ngspice/` | Five circuits, run with `ngspice -b <file>`: `baseline_tia` (as drawn), `baseline_reopt_gain`, `baseline_reopt_gbw`, `proposed_tia`, `proposed_tia_dcc` |
 | `netlists/ltspice/` | `.net` netlists and `.asc` schematics of all five circuits, custom MOS symbols, model card |
+| `simulations/ltspice/` | LTspice runs: `1_original_tia`, `5_original_vs_proposed`, `8_proposed_vs_reopt_baseline` (`.asc`, `.raw`, `.plt`, `.log`, measurement `.db`) |
 | `netlists/cadence/` | Spectre netlists (`.scs`) of all five, SKILL script that builds all five Virtuoso schematics, OCEAN plot script |
 | `models/ptm90.lib` | PTM 90 nm bulk BSIM4 card (models renamed `nmos90`, `pmos90`) |
 | `scripts/` | `circuits.py` (single source of truth for all circuits), `run_all.py`, `make_figures.py`, emitters |

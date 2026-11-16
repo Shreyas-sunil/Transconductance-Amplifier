@@ -17,6 +17,6 @@ For ADE: open the generated schematic, choose Spectre, add `ptm90.lib` under Set
 design variables with the values listed at the top of the matching `.scs` file. The baseline variants use `vg2b`,
 `vg3b`, `lf` and `rsl`; the DCC version adds `rtap`, `ctap`, `cint` and `idc`.
 
-These files were generated from `scripts/circuits.py` without access to a Cadence installation, so they have not been run.
+These files are written by `scripts/emit.py` from `scripts/circuits.py` and have not been run in Cadence yet.
 The ngspice netlists in `../ngspice` are the ones that produced the published numbers; compare against them first.
 A native Virtuoso cellview (OpenAccess database) cannot be produced outside Cadence, which is why the schematic is delivered as a SKILL script.

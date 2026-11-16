@@ -26,8 +26,8 @@ TIA, replacing a passive spiral, with **one control voltage** used both to set b
 at 1 V. That is a narrow, incremental combination. The second contribution, which no one else can make, is the
 BSIM4 re-simulation showing the 2020 baseline circuit does not behave as published.
 
-The paper (`paper/main.tex`) now says this explicitly in a "Related work and positioning" paragraph and no longer
-implies that tunability or inductorless operation are new.
+The "Related work and positioning" paragraph of the paper (`paper/main.tex`) states this, and does not claim
+tunability or inductorless operation as new.
 
 ## Corrections made to the paper
 
