@@ -1,0 +1,4 @@
+cell,in_1GHz_pA,in_5GHz_pA,in_10GHz_pA,irms_10M_10G_uA
+base2020,26.68,25.07,20.58,2.467
+regain,9.18,8.65,8.50,0.871
+proposed,18.30,15.78,20.67,1.766
