@@ -1,178 +1,319 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
-\usepackage{amsmath,amssymb,graphicx,booktabs,siunitx,cite}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{siunitx}
 \sisetup{detect-all}
+\DeclareSIUnit\ohm{\ensuremath{\Omega}}
 \input{numbers.tex}
 \makeatletter\let\tableinput\@@input\makeatother
 
 \begin{document}
-\title{An Inductorless, Bandwidth-Tunable Current-Mirror TIA with Active-Inductor Feedback in 90\,nm CMOS}
+
+\title{A Voltage-Tunable Active-Inductor Feedback Current-Mirror TIA in 90\,nm CMOS}
+
 \author{\IEEEauthorblockN{Shreyas S}
-\IEEEauthorblockA{Department of Electronics and Communication Engineering\\
-R V College of Engineering, Bengaluru, India}}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Communication Engineering} \\
+\textit{R V College of Engineering}\\
+Bengaluru, India}}
+
 \maketitle
 
 \begin{abstract}
-A published 90\,nm current-mirror transimpedance amplifier (TIA) uses a \SI{2.4}{nH} spiral as output-to-input feedback. Re-simulated as drawn, it gives \BZt\,dB$\Omega$ with an \BPk\,dB resonance at \BFpk\,GHz, because its common-gate device sits in triode; a fitting study shows the published flat response needs the inductor to be absent. This paper replaces the spiral with a source-follower active inductor whose gate is fed through a MOS resistor controlled by one voltage, $V_{tune}$, and biases the input as a flipped voltage follower. With a predictive BSIM4 model at \SI{1}{V}, \SI{50}{fF} photodiode and \SI{30}{fF} load, the circuit gives \PZt\,dB$\Omega$, \PBW\,GHz and \PPow\,mW; $V_{tune}$ moves the bandwidth from \TuneMin\ to \TuneMax\,GHz and trims process, voltage and temperature peaking from \PvtPkMax\ to at most \PvtPkTMax\,dB. Rebuilt in Cadence with the GPDK090 foundry models, it gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA}, but a narrower control range of 5.7 to \SI{7.9}{GHz}. A same-gain baseline re-biased for a fair comparison reaches \SI{3.3}{GHz} at \SI{0.07}{mA} with lower noise density. The proposed circuit buys bandwidth at high gain without a spiral and is not more efficient.
+A 90\,nm current-mirror transimpedance amplifier (TIA) published in 2020 uses a \SI{2.4}{nH} spiral as its output-to-input feedback. Simulated as drawn, it gives \BZt\,dB$\Omega$ and resonates at \BFpk\,GHz with \BPk\,dB of peaking, because its common-gate device is biased in triode. This paper keeps the mirror, biases the input as a flipped voltage follower and replaces the spiral with a source follower whose gate is fed from the output through a MOS resistor. The resistor's gate voltage $V_{tune}$ sets the bandwidth. With a 90\,nm predictive BSIM4 model, a \SI{1}{V} supply, a \SI{50}{fF} photodiode and a \SI{30}{fF} load, the circuit gives \PZt\,dB$\Omega$ and \PBW\,GHz at \PPow\,mW. $V_{tune}$ moves the bandwidth from \TuneMin\ to \TuneMax\,GHz and, chosen per condition, holds peaking to \PvtPkTMax\,dB over fifteen process, supply and temperature conditions. Rebuilt in Cadence with the GPDK090 foundry models, the circuit gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA}, with a narrower tuning range of 5.7 to \SI{7.9}{GHz}. A re-biased baseline at the same gain reaches \SI{3.3}{GHz} at \SI{0.07}{mA}. The proposed circuit trades power and noise for bandwidth at high gain, with no spiral.
 \end{abstract}
 
 \begin{IEEEkeywords}
-transimpedance amplifier, active inductor, current mirror, flipped voltage follower, bandwidth tuning, 90\,nm CMOS
+transimpedance amplifier, active inductor, current mirror, flipped voltage follower, bandwidth tuning, optical receiver
 \end{IEEEkeywords}
 
 \section{Introduction}
-Current-mirror TIAs suit supplies of \SI{1}{V} and below because the signal stays in the current domain until the output node, and several have been reported in 40 to 90\,nm CMOS \cite{zohoori,hassan,issa,alyas,shaaban}. Bandwidth is usually extended with inductive peaking \cite{mohanbw} or, without inductors, by active feedback at the input \cite{luactive,taghavi}. A spiral is large, fixed at fabrication and limited by the substrate. An active inductor costs noise and power \cite{yuan,razaviai} but can be tuned.
+In an optical receiver the TIA sets most of the front-end noise and much of the bandwidth \cite{razavi,sackinger}. Current-mirror TIAs work at \SI{1}{V} because the signal stays a current until the output node, and designs in 40 to 90\,nm CMOS have been reported \cite{zohoori,hassan,issa,alyas,shaaban}. Their bandwidth is usually extended with spiral inductors \cite{mohanbw}. A spiral takes far more area than the transistors around it and its value is fixed once the chip is made. An active inductor costs noise and power \cite{yuan,razaviai}, but its value can be changed with a voltage.
 
-Alsheikhjader \cite{baseline} reported a 90\,nm, \SI{1}{V} current-mirror TIA with a \SI{2.4}{nH} inductor from output to input, a stated gain of \SI{43.92}{dB\ohm} and a flat band from 5 to \SI{15}{GHz}, without giving power, photodiode capacitance, load or device model. Active inductors have since been used in current-mirror TIAs as loads \cite{zohoori}, shunt peaking \cite{shaaban} and local feedback \cite{alberwari,issa,alyas}, and voltage-controlled bandwidth has been shown in silicon \cite{hwang,chien}. This paper puts an active inductor in the \emph{global} feedback position of the spiral and uses one control voltage both to set the bandwidth and to trim out corner peaking. The contributions are: a re-simulation and diagnosis of the published baseline, with a re-biased same-gain baseline as a fair reference (Section~\ref{sec:base}); the proposed circuit and its small-signal model (Section~\ref{sec:prop}); a predictive-model characterisation (Section~\ref{sec:ptm}); and a cross-check with the GPDK090 foundry models in Cadence Spectre (Section~\ref{sec:gpdk}). All results are schematic-level simulations.
+Alsheikhjader \cite{baseline} reported a 90\,nm, \SI{1}{V} current-mirror TIA with a \SI{2.4}{nH} inductor from output to input, a gain of \SI{43.92}{dB\ohm} and a flat response from 5 to \SI{15}{GHz}. The paper gives no power, photodiode capacitance, load or device model. Later TIAs from the same group use PMOS active inductors as local feedback and reach 1 to \SI{2.5}{GHz} \cite{alberwari,issa,alyas}. Other work has used active inductors as loads \cite{zohoori} or shunt peaking \cite{shaaban}, and tuned TIA bandwidth with a control voltage in silicon \cite{hwang,chien}.
 
-\section{Baseline re-examined}\label{sec:base}
-In the baseline (Fig.~\ref{fig:schem}a) $M_1$ is a common-gate device, $M_2$ and $M_3$ form the mirror, $M_{2b}$ and $M_{3b}$ are PMOS loads and $L_f$ returns the output to the input. The predictive-model runs use ngspice \cite{ngspice} with the 90\,nm Predictive Technology Model \cite{ptm}, \SI{1}{V}, \SI{35}{\celsius}, $C_{PD}=\SI{50}{fF}$ and $C_L=\SI{30}{fF}$.
+Here the active inductor takes the place of the spiral, as global feedback from output to input, and one control voltage both sets the bandwidth and trims out corner peaking. The paper makes four contributions. Section~\ref{sec:base} re-simulates the 2020 circuit, shows why its published response cannot come from the circuit as drawn, and builds a re-biased baseline at the same gain for a fair comparison. Section~\ref{sec:prop} describes the proposed circuit and its small-signal model. Section~\ref{sec:ptm} characterises it with a predictive model, including corners, mismatch, eye diagrams and a DC-cancellation loop. Section~\ref{sec:gpdk} repeats the main results with the GPDK090 foundry models in Cadence Spectre. All results are schematic-level simulations.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=0.62\linewidth]{figures/schem_baseline}\\[2pt]
-{\footnotesize (a)}\\[4pt]
-\includegraphics[width=\linewidth]{figures/schem_proposed}\\[2pt]
-{\footnotesize (b)}
-\caption{(a) Baseline TIA of \cite{baseline}. (b) Proposed TIA with voltage-tuned active-inductor feedback.}
+\includegraphics[height=4.2cm]{figures/schem_baseline}\hspace{1.2cm}
+\includegraphics[height=4.2cm]{figures/schem_proposed}
+\caption{(a) The 2020 baseline \cite{baseline} with a \SI{2.4}{nH} feedback spiral. (b) The proposed TIA. $M_f$ and $M_t$ with $C_a$ form the active inductor; $V_{b1}$ and the $M_{3b}$ gate come from the bias generator on the left.}
 \label{fig:schem}
-\end{figure}
+\end{figure*}
 
-The gate of $M_{2b}$ is tied to $V_{DD}$ in the published schematic, so $M_{2b}$ conducts only leakage and $M_1$ carries no bias current: it is a triode switch tying node $N$ to the input. For a feedback impedance $Z_f$,
+\section{The 2020 Baseline Re-examined}\label{sec:base}
+\subsection{Operating point}
+Fig.~\ref{fig:schem}(a) shows the baseline. $M_1$ is a common-gate device between the input and node $N$, $M_2$ and $M_3$ form the mirror, $M_{2b}$ and $M_{3b}$ are PMOS loads, and $L_f$ closes the loop. The predictive-model runs use ngspice~42 \cite{ngspice} with the 90\,nm Predictive Technology Model \cite{ptm} at \SI{1}{V} and \SI{35}{\celsius}. $C_{PD}=\SI{50}{fF}$ and $C_L=\SI{30}{fF}$ are assumed throughout.
+
+The published schematic ties the gate of $M_{2b}$ to $V_{DD}$. $M_{2b}$ then has zero gate-source voltage and passes \BIOne\,nA, so $M_1$ has no bias current and sits in deep triode at \BGdsOne\,mS: a switch from node $N$ to the input. With $Z_f$ the feedback impedance and $g_o=g_{ds3}+g_{ds3b}$, nodal analysis gives
 \begin{equation}
-Z_T=\frac{1-g_{m3}Z_f}{(g_{m2}+g_{ds2})(1+g_oZ_f)+g_o+g_{m3}},
+Z_T=\frac{1-g_{m3}Z_f}{(g_{m2}+g_{ds2})(1+g_oZ_f)+g_o+g_{m3}}.
 \label{eq:ztb}
 \end{equation}
-with $g_o=g_{ds3}+g_{ds3b}$, so the low-frequency gain is $1/(g_{m2}+g_{m3}+g_o)$, \BZt\,dB$\Omega$ in simulation. As $\omega L_f$ grows the feedback is removed, the gain rises and $L_f$ resonates with the node capacitances.
+At DC, $Z_f=0$ and $Z_T=1/(g_{m2}+g_{m3}+g_{ds2}+g_o)$, \BZtOhm\,$\Omega$ or \BZt\,dB$\Omega$ with $g_{m2}=g_{m3}=\BGmTwo$\,mS. As $\omega L_f$ grows the feedback falls away and the gain has to rise until the node capacitances take over. That rise is the \BPk\,dB peak at \BFpk\,GHz.
 
-The published curve falls monotonically and has no resonance. Fitting the two unpublished capacitances, both PMOS gate biases and a spiral loss of up to \SI{110}{\ohm} to twelve digitised points leaves at best \DgRmsBestL\,dB rms error, and the fit still peaks. Letting $L_f$ fall below about \DgLfMax\,pH, with about \DgIdNoL\,\si{\micro A} per mirror branch, brings the error to \DgRmsNoL\,dB. The published response is therefore that of the topology without effective inductive feedback.
+\subsection{Why the published curve is not reproduced}
+The published response falls steadily from \SI{203}{\ohm} at \SI{1}{GHz} and has no resonance. The simulator, model and capacitances behind it are unknown, so each candidate explanation was tested by fitting $C_{PD}$ and $C_L$ to twelve points digitised from \cite{baseline} (Fig.~\ref{fig:diag}). The circuit as drawn misses by \DgRmsFitDrawn\,dB rms. Freeing both PMOS gate biases and a spiral loss of up to \SI{110}{\ohm} as well brings the error only to \DgRmsBestL\,dB, and the best fit still peaks near \SI{25}{GHz}. A screen of \DgNScreen\ bias points found no setting with less than \DgPkMin\,dB of peaking. If $L_f$ is allowed to shrink, the error falls to \DgRmsNoL\,dB below about \DgLfMax\,pH, with about \DgIdNoL\,\si{\micro A} in each mirror branch. The published curve therefore matches this topology with no effective inductor and about a fifth of the drawn bias current. It does not match the circuit as drawn.
 
-Comparing against a circuit with a triode input device overstates any improvement. The topology was re-optimised under the constraints used for the new design (at most \SI{1}{dB} peaking and \SI{1.2}{mW}, $L_f$ from 0.2 to \SI{6}{nH}, series loss up to \SI{60}{\ohm}). At the proposed circuit's gain it reaches \RgZt\,dB$\Omega$ and \RgBw\,GHz at \RgPow\,mW with a \RgLf\,nH lossy inductor. Its gain is $1/(g_{m2}+g_{m3})$, so higher gain needs lower $g_m$ and costs bandwidth; this same-gain baseline is the reference used below.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/fig_baseline_diagnosis}
+\caption{(a) Best fits to the published curve \cite{baseline} with the stated \SI{2.4}{nH} (biases, loss and capacitances free) and with $L_f$ free. (b) Best rms error against $L_f$. (c) The baseline as drawn, the two re-optimised baselines and the proposed TIA under the same conditions (PTM).}
+\label{fig:diag}
+\end{figure*}
 
-\section{Proposed circuit}\label{sec:prop}
-Fig.~\ref{fig:schem}(b) shows the proposed TIA. $M_{2b}$ becomes a resistor $R_N$ and the gate of $M_1$ is biased at $V_{b1}$, so $M_1$ carries \IOne\,\si{\micro A} in saturation and $M_1$, $M_2$ form a flipped voltage follower \cite{fvf}. The input rests at \Vin\,V instead of \BVin\,V, which leaves headroom for the feedback device. $M_{3b}$ mirrors a \SI{50}{\micro A} reference, and $V_{b1}$ comes from a replica of $M_1$ in series with $R_b$. The spiral is replaced by the follower $M_f$, whose source drives the input and whose gate is fed from the output through the PMOS triode device $M_t$ with gate $V_{tune}$. $C_a$ adds to $C_{gs}$ of $M_f$. No DC current flows in $M_t$, so $V_{tune}$ does not move the operating point. Table~\ref{tab:sizes} gives the sizes, found by a differential-evolution search for maximum bandwidth at no less than \SI{53}{dB\ohm} and no more than \SI{1}{dB} peaking and \SI{1.2}{mW}.
+\subsection{A fair reference}
+A design compared against a circuit whose input device is in triode will look better than it is. The baseline topology was therefore re-optimised with the same search and constraints used for the proposed circuit: at most \SI{1}{dB} peaking, at most \SI{1.2}{mW}, $L_f$ from 0.2 to \SI{6}{nH} with up to \SI{60}{\ohm} of series loss, and the $M_{2b}$ gate given its own bias. Table~\ref{tab:reopt} gives two results. Optimised for gain-bandwidth product, the baseline reaches \RbGbw\,T$\Omega$Hz at \RbPow\,mW, slightly more than the proposed circuit and at about a quarter of its power. Its gain, though, is $1/(g_{m2}+g_{m3})$, so a high gain needs low transconductance. Held to the proposed circuit's gain it reaches only \RgBw\,GHz. This same-gain baseline is the reference used in the rest of the paper. In both cases the optimiser chose a lossy \SI{43}{\ohm} inductor, not the high-$Q$ spiral the original design assumed.
 
 \begin{table}[t]
-\centering
-\caption{Device sizes ($W/L$ in \si{\micro m}, PTM). $R_N=\SI{5}{k\ohm}$, $R_b=\SI{4.2}{k\ohm}$, $C_a=\SI{30}{fF}$, $I_{ref}=\SI{50}{\micro A}$.}
-\label{tab:sizes}
-\footnotesize
-\begin{tabular}{llll}
-\toprule
-Device & $W/L$ & Device & $W/L$ \\
-\midrule
-\tableinput table_sizes.tex
-\bottomrule
+\caption{Baseline topology as drawn and re-optimised (PTM, $C_{PD}=\SI{50}{fF}$, $C_L=\SI{30}{fF}$, \SI{1}{V})}
+\label{tab:reopt}
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+ & As drawn & Max GBW & Same gain & Proposed \\
+\hline
+Gain (dB$\Omega$) & \BZt & \RbZt & \RgZt & \PZt \\
+BW (GHz) & resonant & \RbBw & \RgBw & \PBW \\
+Peaking (dB) & \BPk & \RbPk & \RgPk & \PPk \\
+Power (mW) & \BPow & \RbPow & \RgPow & \PPow \\
+$i_n$ at \SI{5}{GHz} (pA/$\sqrt{\text{Hz}}$) & \BInFive & \RbInFive & \RgInFive & \PInFive \\
+GBW (T$\Omega$Hz) & -- & \RbGbw & \RgGbw & \PGbw \\
+Feedback & \SI{2.4}{nH} & \RbLf\,nH & \RgLf\,nH & active \\
+\hline
 \end{tabular}
 \end{table}
 
-Seen from the input with the output at AC ground, $M_f$ and its gate network present
+\section{Proposed Circuit}\label{sec:prop}
+\subsection{Topology and bias}
+The proposed TIA (Fig.~\ref{fig:schem}b) changes three things. First, $M_{2b}$ becomes a \SI{5}{k\ohm} resistor $R_N$ and the gate of $M_1$ is driven from $V_{b1}$, so $M_1$ carries \IOne\,\si{\micro A} in saturation. $M_1$ and $M_2$ then form a flipped voltage follower \cite{fvf}, which lowers the input resistance in the way a regulated cascode does \cite{park}. The input settles at \Vin\,V instead of \BVin\,V. Second, $M_{3b}$ mirrors a \SI{50}{\micro A} reference, and $V_{b1}$ comes from a diode-connected replica of $M_1$ in series with $R_b$, so the bias no longer depends directly on the supply. Third, the spiral is replaced by the source follower $M_f$. Its source drives the input and its gate, node $G$, is fed from the output through the PMOS triode device $M_t$, whose gate is $V_{tune}$. $C_a$ sits between gate and source of $M_f$.
+
+The level shift at the input is what makes room for $M_f$. It needs about \SI{0.4}{V} of gate-source drop, so the output sits at \Vout\,V and \SI{0.34}{V} is left across $M_{3b}$. $M_t$ carries no DC current, so changing $V_{tune}$ does not move the operating point. Table~\ref{tab:sizes} gives the sizes, found by a differential-evolution search that maximised bandwidth at no less than \SI{53}{dB\ohm}, no more than \SI{1}{dB} of peaking and \SI{1.2}{mW}, with every device in saturation. The circuit draws \ITot\,\si{\micro A}, \SI{97}{\micro A} of it in the bias generator.
+
+\begin{table}[t]
+\caption{Device sizes ($W/L$ in \si{\micro m}). $R_N=\SI{5}{k\ohm}$, $R_b=\SI{4.2}{k\ohm}$, $C_a=\SI{30}{fF}$, $I_{ref}=\SI{50}{\micro A}$}
+\label{tab:sizes}
+\centering\footnotesize
+\begin{tabular}{|l|l|l|l|}
+\hline
+Device & $W/L$ & Device & $W/L$ \\
+\hline
+\tableinput table_sizes.tex
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{The active inductor}
+Seen from the input, with the output at AC ground, $M_f$ and its gate network present
 \begin{equation}
-Z_{AI}=\frac{1+sR_tC_g}{g_f+sC_g},\quad L_{eq}=\frac{C_g}{g_f}\left(R_t-\frac{1}{g_f}\right),
+Z_{AI}=\frac{1+sR_tC_g}{g_f+sC_g},\qquad L_{eq}=\frac{C_g}{g_f}\left(R_t-\frac{1}{g_f}\right),
 \label{eq:zai}
 \end{equation}
-with $g_f=g_{mf}+g_{mbf}+g_{dsf}$, $C_g=C_a+C_{gsf}$ and $R_t$ the channel resistance of $M_t$ \cite{yuan}. It is inductive only when $R_t>1/g_f$, and it is unilateral: an active feedback path with an inductive transfer admittance. With mirror gain $m=g_{m3}/g_{m2}$, output resistance $R_o$ and output capacitance $C_o$,
+where $g_f=g_{mf}+g_{mbf}+g_{dsf}$, $C_g=C_a+C_{gsf}$ and $R_t$ is the channel resistance of $M_t$ \cite{yuan,sackingerla}. The element is inductive only when $R_t>1/g_f$. In simulation (Fig.~\ref{fig:ai}) the low-frequency resistance is \AIRs\,$\Omega$ and the impedance turns inductive near \SI{0.27}{V}. At \SI{1}{GHz} the equivalent inductance is \AILB, \AILC\ and \AILD\,nH at $V_{tune}=0.32$, 0.36 and \SI{0.40}{V}, with a peak $Q$ of only \AIQD. This is a very lossy inductor, and it is used as a movable zero, not as a resonator. It is also one-way: it injects a current set by the output voltage into the input, but draws no signal current from the output.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_active_inductor}
+\caption{Simulated impedance of the active inductor seen from the input, output at AC ground, for several $V_{tune}$ (PTM).}
+\label{fig:ai}
+\end{figure}
+
+\subsection{Transimpedance}
+Let $m=g_{m3}/g_{m2}$ be the mirror gain, $R_o$ the output resistance and $C_o$ the output capacitance. Closing the loop through $M_f$ gives
 \begin{equation}
 Z_T(s)\approx-\frac{mR_o(1+sR_tC_g)}{(1+sR_oC_o)(1+sR_tC_g)+m\,g_{mf}R_o}\,H_{in}(s),
 \label{eq:zt}
 \end{equation}
-where $H_{in}$ is the second-order response of the input stage. The gate network adds a zero at $1/(R_tC_g)$ and turns the output pole into a pair whose damping falls as $R_t$ rises, so $V_{tune}$ sets how fast the feedback is removed with frequency.
+where $H_{in}$ is the second-order response of the input stage. At DC this is $-mR_o/(1+T_0)$ with loop gain $T_0=m\,g_{mf}R_o=\Tzero$, which gives \ZtApprox\,$\Omega$ against \PZtOhm\,$\Omega$ from SPICE. The gate network adds a zero at $1/(R_tC_g)$ and turns the output pole into a complex pair whose damping falls as $R_t$ rises. A small $R_t$ removes the feedback slowly and the response droops early; a larger $R_t$ flattens it; a still larger one makes it peak.
 
-\section{Predictive-model results}\label{sec:ptm}
-At $V_{tune}=\VtNom$\,V the proposed TIA gives \PZt\,dB$\Omega$, \PBW\,GHz, \PPk\,dB peaking and \PPow\,mW, with \PInFive\,pA/$\sqrt{\text{Hz}}$ input-referred noise at \SI{5}{GHz}. Against the same-gain baseline it has \BwRatioGain\ times the bandwidth and a gain-bandwidth product of \PGbw\ against \RgGbw\,T$\Omega$Hz, but about ten times the power and \PInFive\ against \RgInFive\,pA/$\sqrt{\text{Hz}}$ of noise.
+\section{Predictive-Model Results}\label{sec:ptm}
+\subsection{Nominal point and noise}
+At $V_{tune}=\VtNom$\,V the TIA gives \PZt\,dB$\Omega$, \PBW\,GHz with \PPk\,dB of peaking, and \PPow\,mW. The input-referred noise is \PInOne, \PInFive\ and \PInTen\,pA/$\sqrt{\text{Hz}}$ at 1, 5 and \SI{10}{GHz}, and \PIrms\,\si{\micro A} rms integrated over the bandwidth. At \SI{5}{GHz} (Fig.~\ref{fig:noise}) $M_1$ contributes \NsMOne\,\% of the output noise power, $M_2$ \NsMTwo\,\%, $M_3$ \NsMThree\,\%, and the feedback devices $M_f$ and $M_t$ together \SI{21}{\percent}. In the baseline as drawn the triode $M_1$ alone gives \NsBMOne\,\%, which is why it is noisier at \BInFive\,pA/$\sqrt{\text{Hz}}$ despite having fewer devices.
 
-Fig.~\ref{fig:tune} shows the tuning law. From \SI{0}{V} to \VtOneDb\,V the bandwidth moves from \TuneMin\ to \TuneMax\,GHz (\TuneRatio:1) at constant gain and below \SI{1}{dB} peaking; above that the peaking grows.
+Against the same-gain baseline the proposed TIA has \BwRatioGain\ times the bandwidth, but about ten times the power and \PInFive\ against \RgInFive\,pA/$\sqrt{\text{Hz}}$ of noise.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_noise}
+\caption{(a) Input-referred noise by device. (b) Share of output noise power at \SI{5}{GHz} (PTM).}
+\label{fig:noise}
+\end{figure}
+
+\subsection{Tuning and stability}
+Fig.~\ref{fig:tune} and Table~\ref{tab:tune} give the response against $V_{tune}$. As $R_t$ rises from \RtMin\ to \RtNom\,$\Omega$ between 0 and \SI{0.28}{V}, the bandwidth moves from \TuneMin\ to \PBW\,GHz and the gain and peaking do not change. Above \SI{0.30}{V} the bandwidth stops rising and the peaking grows, to \SI{3.86}{dB} at \SI{0.40}{V}. The lower settings also cut the integrated noise, to \IrmsMin\,\si{\micro A} at \SI{0}{V}, which suits a lower data rate.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/fig_vtune_tuning}
-\caption{PTM: (a) transimpedance and (b) bandwidth and peaking against $V_{tune}$.}
+\caption{(a) Transimpedance and (b) bandwidth and peaking against $V_{tune}$ (PTM).}
 \label{fig:tune}
 \end{figure}
 
-The PTM card has no foundry corners, so corners were emulated by $\pm\SI{30}{mV}$ threshold and $\pm\SI{5}{\percent}$ mobility shifts with resistor and capacitor spreads, at 0.9 to \SI{1.1}{V} and $-40$ to \SI{85}{\celsius}. With $V_{tune}$ fixed, the peaking over fifteen conditions reaches \PvtPkMax\,dB; choosing $V_{tune}$ per condition on a \SI{20}{mV} grid holds it to \PvtPkTMax\,dB with \PvtBwTMin\ to \PvtBwTMax\,GHz (Fig.~\ref{fig:pvt}). In a \McN-sample Monte Carlo run with assumed mismatch coefficients \cite{pelgrom}, the worst peaking falls from \McPkMax\ to \McPkTMax\,dB with trimming. Average photocurrent is taken from $M_f$ and overloads the input above about \PrLimit\,\si{\micro A}; a DC-cancellation loop that regulates the follower current extends this to \DcLimit\,\si{\micro A} for \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise.
+\begin{table}[t]
+\caption{Tuning law (PTM, nominal, \SI{1}{V}, \SI{35}{\celsius})}
+\label{tab:tune}
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+$V_{tune}$ & $R_t$ & BW & Peak & $i_{n,rms}$ & $i_n$ at \SI{5}{GHz} \\
+(V) & ($\Omega$) & (GHz) & (dB) & (\si{\micro A}) & (pA/$\sqrt{\text{Hz}}$) \\
+\hline
+\tableinput table_tune.tex
+\hline
+\end{tabular}
+\end{table}
+
+Loop gains were measured with Middlebrook's double injection \cite{middlebrook}. The global loop has \LoopTzero\,dB of DC gain, crosses unity between \LoopFuMin\ and \LoopFuMax\,GHz and keeps at least \LoopPMg\si{\degree} of phase margin over the tuning range. The local flipped-voltage-follower loop is the tighter one: \LoopPMl\si{\degree} at \SI{50}{fF} of photodiode capacitance, falling to \LoopPMlCpd\si{\degree} at \SI{200}{fF}.
+
+\subsection{Corners and mismatch}
+The PTM card has no foundry corners, so they were emulated with $\pm\SI{30}{mV}$ threshold and $\pm\SI{5}{\percent}$ mobility shifts for each device type, $\pm\SI{15}{\percent}$ on resistors and $\pm\SI{10}{\percent}$ on $C_a$, together with 0.9 and \SI{1.1}{V} supplies and $-40$ and \SI{85}{\celsius}. Over fifteen such conditions with $V_{tune}$ fixed, the bandwidth spans \PvtBwMin\ to \PvtBwMax\,GHz and the peaking reaches \PvtPkMax\,dB, in the FS case. Choosing $V_{tune}$ per condition on a \SI{20}{mV} grid holds the peaking to \PvtPkTMax\,dB (Fig.~\ref{fig:pvt}). Trimming cannot recover bandwidth the input stage loses when slow and hot: SS at \SI{0.9}{V} and \SI{85}{\celsius} stays at \PvtBwTMin\,GHz.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/fig_pvt}
-\caption{PTM: bandwidth and peaking over fifteen emulated corner, supply and temperature conditions, with fixed and trimmed $V_{tune}$.}
+\caption{Bandwidth and peaking over fifteen emulated corner, supply and temperature conditions with fixed and trimmed $V_{tune}$ (PTM). The dotted line is the nominal bandwidth.}
 \label{fig:pvt}
 \end{figure}
 
-\section{GPDK090 cross-check}\label{sec:gpdk}
-The 2020 baseline, the same-gain baseline and the proposed circuit were rebuilt as Virtuoso schematics and simulated in Spectre with the GPDK090 v4.6 models at \SI{1}{V} and the same $C_{PD}$ and $C_L$. The kit's minimum length is \SI{100}{nm}, so every device uses $L\geq\SI{100}{nm}$ with the PTM widths; $V_{tune}$ is \SI{0.24}{V}. The same-gain baseline has a \SI{43}{\ohm} series resistor in the feedback path and fixed gate-bias sources, while the proposed circuit keeps its current-referenced bias generator. Gain is taken at \SI{100}{MHz}. Table~\ref{tab:gpdk} gives the nominal point and the range over the kit's NN, SS, FF, FS and SF sections at $-40$, 35 and \SI{125}{\celsius}.
+A \McN-sample Monte Carlo run combined global spread with Pelgrom mismatch \cite{pelgrom} at $A_{VT}=\SI{3.5}{mV.\micro m}$ and $A_\beta=\SI{1}{\percent.\micro m}$, both assumed. With $V_{tune}$ fixed the bandwidth is $\McBwMean\pm\McBwStd$\,GHz and \McPkYieldFixed\,\% of samples stay under \SI{1}{dB} of peaking. With the same trimming rule every sample does, the worst being \McPkTMax\,dB (Fig.~\ref{fig:mc}).
 
-\begin{table*}[t]
+\begin{figure}[t]
 \centering
-\caption{GPDK090 results (Cadence Spectre, \SI{1}{V}, $C_{PD}=\SI{50}{fF}$, $C_L=\SI{30}{fF}$). Top: NN, \SI{35}{\celsius}. Bottom: minimum to maximum over five sections at three temperatures.}
-\label{tab:gpdk}
-\footnotesize
-\begin{tabular}{lllllll}
-\toprule
-Circuit & Gain (dB$\Omega$) & Peak (dB) & BW (GHz) & GBW (T$\Omega$Hz) & $I_{DD}$ (mA) & $i_n$ at \SI{5}{GHz} (pA/$\sqrt{\text{Hz}}$) \\
-\midrule
-\tableinput table_gpdk_nom.tex
-\midrule
- & Gain (dB$\Omega$) & BW (GHz) & Peak (dB) & $I_{DD}$ (mA) & & \\
-\midrule
-\tableinput table_gpdk_corner.tex
-\bottomrule
-\end{tabular}
-\end{table*}
+\includegraphics[width=\linewidth]{figures/fig_monte_carlo}
+\caption{Monte Carlo distributions (\McN\ samples, PTM) with fixed and trimmed $V_{tune}$.}
+\label{fig:mc}
+\end{figure}
 
-The 2020 baseline as drawn gives \SI{40.5}{dB\ohm} with \SI{8.9}{dB} of peaking, which agrees with the predictive-model diagnosis. The same-gain baseline gives \SI{55.4}{dB\ohm} and \SI{3.3}{GHz} at \SI{0.07}{mA}, close to its PTM figures. The proposed circuit gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA}: 2.3 times the bandwidth and 1.9 times the gain-bandwidth product of the same-gain baseline, at fourteen times the current and 1.8 times the noise density. Over the fifteen corner points its gain varies by \SI{3.2}{dB} against \SI{11.1}{dB} for the same-gain baseline, whose bandwidth swings from 1.6 to \SI{16.8}{GHz}; part of that difference comes from the baseline's fixed bias sources.
+\subsection{Eye diagrams}
+For a $2^7-1$ pseudo-random input of \SI{100}{\micro A} peak to peak, the test current of \cite{baseline}, the proposed TIA gives a \EyePTenAmp\,mV swing at \SI{10}{Gb/s} with a vertical opening of \EyePTenPct\,\% and a horizontal opening of \EyePTenW\,\% of the unit interval (Fig.~\ref{fig:eye}). At \SI{12.5}{Gb/s} it keeps \EyePTwW\,\% horizontally, while ringing at the baseline's resonance closes its eye to \EyeBTwW\,\%.
 
-Two results differ from the predictive model. Sweeping $V_{tune}$ from 0 to \SI{0.30}{V} moves the bandwidth only from 5.70 to \SI{7.88}{GHz} (1.38:1) at constant gain, with peaking below \SI{1}{dB} up to \SI{0.28}{V} and \SI{3.5}{dB} at \SI{0.40}{V}. And with $V_{tune}$ fixed, the FS section at \SI{-40}{\celsius} peaks by \SI{4.2}{dB}; per-corner trimming was not run with the foundry models.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_eye_diagrams}
+\caption{Eye diagrams for a \SI{100}{\micro A} peak-to-peak PRBS-7 input, no noise (PTM).}
+\label{fig:eye}
+\end{figure}
 
-\section{Comparison and limitations}
-Table~\ref{tab:comp} compares the results. Figures for other works are as their authors report them.
+\subsection{Load and photodiode capacitance}
+Fig.~\ref{fig:load}(a) compares the active-inductor network with plain follower feedback, where the gate of $M_f$ is tied to the output and $C_a$ is removed. At the nominal \SI{30}{fF} load the plain follower is faster, \LdResLight\ against \LdAiLight\,GHz, because the input stage sets the bandwidth and the gate network only adds capacitance. As the load grows the output pole takes over and the inductive zero starts to pay: re-tuned, the active inductor gives \LdRatioMid\ times the plain follower's bandwidth at \SI{150}{fF} and \LdRatioHeavy\ times at \SI{250}{fF}. With a larger photodiode the peaking grows, and lowering $V_{tune}$ keeps it under \SI{1}{dB} up to \SI{200}{fF} at about \SI{7.4}{GHz} (Fig.~\ref{fig:load}b).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/fig_load_pd_overload}
+\caption{(a) Bandwidth against load for plain follower feedback and the re-tuned active inductor. (b) Bandwidth against photodiode capacitance. (c) Gain at \SI{100}{MHz} against DC input current (PTM).}
+\label{fig:load}
+\end{figure}
+
+\subsection{Input overload and DC cancellation}
+Average photocurrent flowing into the input is taken from $M_f$, which carries \IF\,\si{\micro A}. The gain moves by more than \SI{1}{dB} above \PrLimit\,\si{\micro A}, and by \SI{100}{\micro A} $M_f$ is starved (Fig.~\ref{fig:load}c) and the bandwidth has fallen to \PrBwHundred\,GHz. The loop in Fig.~\ref{fig:dccs} protects the follower current directly. Because $M_t$ carries no DC current, $V_{OUT}-V_{IN}$ is the gate-source voltage of $M_f$. A half-width replica $M_r$ biased at $I_{th}/2$ gives $V_R=V_{OUT}-V_{GS}(I_{th})$, and a PMOS-input OTA integrates $V_R-V_{IN}$ on \SI{2}{pF} and drives $M_{dc}$ to sink the excess photocurrent. The threshold sits just above the dark follower current, so the loop is always engaged; a threshold below it failed in Monte Carlo.
+
+With the loop (Fig.~\ref{fig:dcc}) the bandwidth stays within \SI{10}{\percent} and the gain within \SI{1}{dB} of their dark values up to \DcLimit\,\si{\micro A}. It costs \DcPowAdd\,\si{\micro W}, \SI{0.5}{dB} of gain and \DcNoisePct\,\% more noise at \SI{5}{GHz}, and it has at least \DcPmMin\si{\degree} of phase margin. Its low-frequency corner rises to \DcFloMax\,MHz at \SI{500}{\micro A}, which limits long runs of identical bits.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{figures/schem_dcc}
+\caption{DC-cancellation loop. $V_{OUT}$ and $V_{IN}$ are the nodes of Fig.~\ref{fig:schem}(b).}
+\label{fig:dccs}
+\end{figure}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.78\textwidth]{figures/fig_dcc}
+\caption{DC-cancellation loop (PTM). (a) Bandwidth (solid) and gain at \SI{100}{MHz} (dotted) against average photocurrent. (b) Follower and cancellation currents. (c) Output for a photocurrent step. (d) Transimpedance at several average currents.}
+\label{fig:dcc}
+\end{figure*}
+
+\section{GPDK090 Cross-Check}\label{sec:gpdk}
+The predictive model is not a foundry model, so the three circuits that carry the argument were rebuilt as Virtuoso schematics and simulated in Spectre with the GPDK090 v4.6 models (\texttt{nmos1v}, \texttt{pmos1v}). The kit's minimum length is \SI{100}{nm}, so every device uses $L\geq\SI{100}{nm}$ with the widths of Table~\ref{tab:sizes}, and the numbers are not expected to match the PTM ones exactly. $V_{tune}$ is \SI{0.24}{V}. The same-gain baseline is the 2020 topology re-biased to the proposed circuit's gain, with a \SI{43}{\ohm} feedback series resistor and fixed gate-bias sources. Gain is read at \SI{100}{MHz}.
 
 \begin{table}[t]
-\centering
-\caption{Comparison. Sim.: simulated; meas.: measured silicon.}
-\label{tab:comp}
-\footnotesize\setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{llllll}
-\toprule
-Work & Process & Gain & BW & Power & Tunable \\
- & & (dB$\Omega$) & (GHz) & (mW) & \\
-\midrule
-\cite{baseline}, published & 90\,nm & 43.9 & 5--15 & n/r & no \\
-\cite{baseline}, as drawn, PTM & 90\,nm & \BZt & resonant & \BPow & no \\
-Same-gain baseline, PTM & 90\,nm & \RgZt & \RgBw & \RgPow & no \\
-\cite{zohoori}, sim. & 90\,nm & 40.5 & 7 & 1.4 & no \\
-\cite{issa}, sim. & 45\,nm & 68.2 & 2.5 & 0.56 & no \\
-\cite{hwang}, meas. & \SI{0.18}{\micro m} & 52 & 3.9--7.6 & 34 & yes \\
-\cite{chien}, meas. & \SI{0.18}{\micro m} & 47.8 & 6.2--10.5 & 33.3 & yes \\
-This work, PTM & 90\,nm & \PZt & \TuneMin--\TuneMax & \PPow & yes \\
-This work, GPDK090 & 90\,nm & 53.8 & 5.7--7.9 & 0.97 & yes \\
-\bottomrule
+\caption{GPDK090 nominal point (NN, \SI{35}{\celsius}, \SI{1}{V})}
+\label{tab:gnom}
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+Circuit & Gain & Peak & BW & $I_{DD}$ & $i_n$ at \SI{5}{GHz} \\
+ & (dB$\Omega$) & (dB) & (GHz) & (mA) & (pA/$\sqrt{\text{Hz}}$) \\
+\hline
+\tableinput table_gpdk_nom_c.tex
+\hline
 \end{tabular}
 \end{table}
 
-All results are schematic-level; layout parasitics at the input and at node $N$ will lower the bandwidth. Monte Carlo, transient, loading and the DC-cancellation loop were run only with the predictive model. The photodiode is a current source with a capacitor, and the reference current is ideal.
+\begin{table}[t]
+\caption{GPDK090 range over NN, SS, FF, FS and SF at $-40$, 35 and \SI{125}{\celsius}, $V_{tune}$ fixed}
+\label{tab:gcorn}
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Circuit & Gain (dB$\Omega$) & BW (GHz) & Peak (dB) & $I_{DD}$ (mA) \\
+\hline
+\tableinput table_gpdk_corner_c.tex
+\hline
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:gnom} gives the nominal results. The 2020 baseline as drawn gives \SI{40.5}{dB\ohm} with \SI{8.9}{dB} of peaking, so the foundry models agree that the published flat response does not come from this circuit. The same-gain baseline gives \SI{3.3}{GHz} at \SI{0.07}{mA}, close to its PTM figures. The proposed circuit gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA}. That is 2.3 times the bandwidth of the same-gain baseline, for fourteen times the current and 1.8 times the noise density. Integrated from \SI{10}{MHz} to \SI{10}{GHz}, the input noise is \SI{1.77}{\micro A} for the proposed circuit and \SI{0.87}{\micro A} for the same-gain baseline.
+
+Over fifteen corner and temperature points (Table~\ref{tab:gcorn}) the proposed circuit's gain stays within \SI{3.2}{dB} and its current within \SI{0.16}{mA}. The same-gain baseline's gain moves by \SI{11.1}{dB} and its bandwidth from 1.6 to \SI{16.8}{GHz}, partly because its gate biases are fixed voltages rather than tracking a reference. With $V_{tune}$ fixed, the proposed circuit peaks by \SI{4.2}{dB} in FS at \SI{-40}{\celsius}. Per-corner trimming, which removed such peaking with the predictive model, has not yet been run with the foundry models.
+
+The tuning range is where the two models disagree most. Sweeping $V_{tune}$ from 0 to \SI{0.30}{V} moves the GPDK090 bandwidth from 5.70 to \SI{7.88}{GHz}, a ratio of 1.38 against \TuneRatio\ with PTM. The gain stays at \SI{53.8}{dB\ohm} and the peaking stays below \SI{1}{dB} up to \SI{0.28}{V}, reaching \SI{3.5}{dB} at \SI{0.40}{V}.
+
+\section{Comparison and Limitations}
+Table~\ref{tab:comp} places the results beside related work. Other designs are listed as their authors report them. The proposed circuit is not more efficient than a well-biased baseline. What it offers is bandwidth at high gain, feedback without a spiral, and a control voltage for bandwidth and corner peaking.
+
+\begin{table}[t]
+\caption{Comparison (sim.: simulated, meas.: measured)}
+\label{tab:comp}
+\centering\footnotesize\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+Work & Node & Gain & BW & Power & Tun- \\
+ & & (dB$\Omega$) & (GHz) & (mW) & able \\
+\hline
+\cite{baseline} published & 90\,nm & 43.9 & 5--15 & n/r & no \\
+\cite{baseline} as drawn, PTM & 90\,nm & \BZt & resonant & \BPow & no \\
+Same-gain base., GPDK & 90\,nm & 55.4 & 3.3 & 0.07 & no \\
+\cite{zohoori} sim. & 90\,nm & 40.5 & 7 & 1.4 & no \\
+\cite{issa} sim. & 45\,nm & 68.2 & 2.5 & 0.56 & no \\
+\cite{hwang} meas. & 180\,nm & 52 & 3.9--7.6 & 34 & yes \\
+\cite{chien} meas. & 180\,nm & 47.8 & 6.2--10.5 & 33.3 & yes \\
+This work, PTM & 90\,nm & \PZt & \TuneMin--\TuneMax & \PPow & yes \\
+This work, GPDK & 90\,nm & 53.8 & 5.7--7.9 & 0.97 & yes \\
+\hline
+\end{tabular}
+\end{table}
+
+All results are schematic-level. Layout parasitics at the input and at node $N$ will lower the bandwidth. Mismatch, eye diagrams, loop gains and the DC-cancellation loop were simulated only with the predictive model, and its corners are emulated. The photodiode is modelled as a current source and a capacitor, without bond-wire inductance or ESD protection, and the reference current is ideal. The diagnosis of the 2020 circuit rests on digitised points and assumed capacitances.
 
 \section{Conclusion}
-The published baseline does not give its reported response as drawn with a \SI{2.4}{nH} inductor, in either the predictive or the foundry models. Replacing the spiral with a voltage-tuned source-follower active inductor and biasing the input as a flipped voltage follower gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA} with GPDK090, against \SI{3.3}{GHz} for a same-gain baseline at \SI{0.07}{mA}. One voltage sets the bandwidth, over 1.75:1 in the predictive model and 1.38:1 with the foundry models. The circuit trades power and noise for bandwidth at high gain and the removal of the spiral. Per-corner trimming, Monte Carlo and layout with the foundry kit are the next steps.
+The 2020 current-mirror TIA does not give its published response as drawn with a \SI{2.4}{nH} inductor, with either the predictive or the foundry models. Replacing the spiral with a voltage-tuned source-follower active inductor, and biasing the input as a flipped voltage follower, gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA} with GPDK090, against \SI{3.3}{GHz} at \SI{0.07}{mA} for a baseline at the same gain. One voltage sets the bandwidth, over 1.75:1 with the predictive model and 1.38:1 with the foundry models. The next steps are per-corner trimming and Monte Carlo with the foundry kit, followed by layout.
 
-\begin{thebibliography}{99}
+\begin{thebibliography}{00}
+\bibitem{razavi} B. Razavi, \emph{Design of Integrated Circuits for Optical Communications}, 2nd ed. Hoboken, NJ, USA: Wiley, 2012.
+\bibitem{sackinger} E. S\"ackinger, \emph{Analysis and Design of Transimpedance Amplifiers for Optical Receivers}. Hoboken, NJ, USA: Wiley, 2017.
 \bibitem{zohoori} S. Zohoori, M. Dolatshahi, M. Pourahmadi, and M. Hajisafari, ``A CMOS low-power current-mirror-based transimpedance amplifier for 10 Gbps optical communications,'' \emph{Microelectron. J.}, vol. 80, pp. 18--27, 2018.
-\bibitem{hassan} M. Hassan and H. Zimmermann, ``A 10Gb/s inductor less push pull current mirror transimpedance amplifier,'' in \emph{Proc. IEEE ICECS}, Seville, Spain, 2012.
+\bibitem{hassan} M. Hassan and H. Zimmermann, ``A 10Gb/s inductor less push pull current mirror transimpedance amplifier,'' in \emph{Proc. IEEE Int. Conf. Electron., Circuits Syst. (ICECS)}, Seville, Spain, 2012.
 \bibitem{issa} M. S. H. Alsheikhjader and A. A. Issa, ``A simulated 45 nm MOSFET channel process in transimpedance amplifier design for optoelectronics applications,'' \emph{Jordan J. Phys.}, vol. 17, no. 2, pp. 165--178, 2024.
 \bibitem{alyas} M. M. Alyas and M. S. H. Alsheikhjader, ``A low-power 45 nm CMOS transimpedance amplifier with active inductor feedback for fiber-optic applications,'' \emph{Jordan J. Phys.}, vol. 19, no. 2, pp. 131--143, 2026.
 \bibitem{shaaban} Shaaban \emph{et al.}, ``Design of a novel CMOS transimpedance amplifier based on a current mirror,'' \emph{Int. J. Circuit Theory Appl.}, 2025, doi: 10.1002/cta.4353.
-\bibitem{mohanbw} S. S. Mohan, M. del M. Hershenson, S. P. Boyd, and T. H. Lee, ``Bandwidth extension in CMOS with optimized on-chip inductors,'' \emph{IEEE J. Solid-State Circuits}, vol. 35, no. 3, pp. 346--355, 2000.
-\bibitem{luactive} Z. Lu, K. S. Yeo, J. Ma, M. A. Do, W. M. Lim, and X. Chen, ``Design of a CMOS broadband transimpedance amplifier with active feedback,'' \emph{IEEE Trans. VLSI Syst.}, vol. 18, no. 3, pp. 461--472, 2010.
-\bibitem{taghavi} M. H. Taghavi, L. Belostotski, J. W. Haslett, and P. Ahmadi, ``10-Gb/s 0.13-$\mu$m CMOS inductorless modified-RGC transimpedance amplifier,'' \emph{IEEE Trans. Circuits Syst. I}, vol. 62, no. 8, pp. 1971--1980, 2015.
+\bibitem{mohanbw} S. S. Mohan, M. del M. Hershenson, S. P. Boyd, and T. H. Lee, ``Bandwidth extension in CMOS with optimized on-chip inductors,'' \emph{IEEE J. Solid-State Circuits}, vol. 35, no. 3, pp. 346--355, Mar. 2000.
 \bibitem{yuan} F. Yuan, \emph{CMOS Active Inductors and Transformers: Principle, Implementation, and Applications}. New York, NY, USA: Springer, 2008.
 \bibitem{razaviai} B. Razavi, ``The active inductor [A circuit for all seasons],'' \emph{IEEE Solid-State Circuits Mag.}, vol. 12, no. 2, pp. 7--11, 2020.
 \bibitem{baseline} M. S. H. Alsheikhjader, ``Low noise with wide band transimpedance amplifier for nonlinear fiber optical applications,'' \emph{Rafidain J. Sci.}, vol. 29, no. 1, pp. 71--78, 2020, doi: 10.33899/rjs.2020.164476.
 \bibitem{alberwari} R. A. Al-Berwari and M. S. H. Alsheikhjader, ``An active inductor based transimpedance amplifier with two local feedbacks as a fiber optic application,'' \emph{Rafidain J. Sci.}, vol. 32, no. 2, pp. 38--52, 2023, doi: 10.33899/rjs.2023.178574.
-\bibitem{hwang} H.-Y. Hwang, J.-C. Chien, T.-Y. Chen, and L.-H. Lu, ``A CMOS tunable transimpedance amplifier,'' \emph{IEEE Microw. Wireless Compon. Lett.}, vol. 16, no. 12, pp. 693--695, 2006.
-\bibitem{chien} C.-K. Chien, H.-H. Hsieh, H.-S. Chen, and L.-H. Lu, ``A transimpedance amplifier with a tunable bandwidth in 0.18-$\mu$m CMOS,'' \emph{IEEE Trans. Microw. Theory Techn.}, vol. 58, no. 3, pp. 498--505, 2010.
+\bibitem{hwang} H.-Y. Hwang, J.-C. Chien, T.-Y. Chen, and L.-H. Lu, ``A CMOS tunable transimpedance amplifier,'' \emph{IEEE Microw. Wireless Compon. Lett.}, vol. 16, no. 12, pp. 693--695, Dec. 2006.
+\bibitem{chien} C.-K. Chien, H.-H. Hsieh, H.-S. Chen, and L.-H. Lu, ``A transimpedance amplifier with a tunable bandwidth in 0.18-$\mu$m CMOS,'' \emph{IEEE Trans. Microw. Theory Techn.}, vol. 58, no. 3, pp. 498--505, Mar. 2010.
 \bibitem{ngspice} H. Vogt \emph{et al.}, \emph{Ngspice User's Manual}, version 42, 2023.
-\bibitem{ptm} W. Zhao and Y. Cao, ``New generation of predictive technology model for sub-45 nm early design exploration,'' \emph{IEEE Trans. Electron Devices}, vol. 53, no. 11, pp. 2816--2823, 2006.
-\bibitem{fvf} R. G. Carvajal \emph{et al.}, ``The flipped voltage follower: a useful cell for low-voltage low-power circuit design,'' \emph{IEEE Trans. Circuits Syst. I}, vol. 52, no. 7, pp. 1276--1291, 2005.
-\bibitem{pelgrom} M. J. M. Pelgrom, A. C. J. Duinmaijer, and A. P. G. Welbers, ``Matching properties of MOS transistors,'' \emph{IEEE J. Solid-State Circuits}, vol. 24, no. 5, pp. 1433--1439, 1989.
+\bibitem{ptm} W. Zhao and Y. Cao, ``New generation of predictive technology model for sub-45 nm early design exploration,'' \emph{IEEE Trans. Electron Devices}, vol. 53, no. 11, pp. 2816--2823, Nov. 2006.
+\bibitem{fvf} R. G. Carvajal \emph{et al.}, ``The flipped voltage follower: A useful cell for low-voltage low-power circuit design,'' \emph{IEEE Trans. Circuits Syst. I, Reg. Papers}, vol. 52, no. 7, pp. 1276--1291, Jul. 2005.
+\bibitem{park} S. M. Park and H.-J. Yoo, ``1.25-Gb/s regulated cascode CMOS transimpedance amplifier for Gigabit Ethernet applications,'' \emph{IEEE J. Solid-State Circuits}, vol. 39, no. 1, pp. 112--121, Jan. 2004.
+\bibitem{sackingerla} E. S\"ackinger and W. C. Fischer, ``A 3-GHz 32-dB CMOS limiting amplifier for SONET OC-48 receivers,'' \emph{IEEE J. Solid-State Circuits}, vol. 35, no. 12, pp. 1884--1888, Dec. 2000.
+\bibitem{middlebrook} R. D. Middlebrook, ``Measurement of loop gain in feedback systems,'' \emph{Int. J. Electron.}, vol. 38, no. 4, pp. 485--512, 1975.
+\bibitem{pelgrom} M. J. M. Pelgrom, A. C. J. Duinmaijer, and A. P. G. Welbers, ``Matching properties of MOS transistors,'' \emph{IEEE J. Solid-State Circuits}, vol. 24, no. 5, pp. 1433--1439, Oct. 1989.
 \end{thebibliography}
 \end{document}

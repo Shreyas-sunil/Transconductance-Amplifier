@@ -33,4 +33,17 @@ for c in names:
 # Vtune sweep
 out = [f'{float(r["vtn_V"]):.2f} & {float(r["Zt100M_dBohm"]):.2f} & {float(r["peak_dBohm"]) - float(r["Zt100M_dBohm"]):.2f} & {float(r["f3dB_GHz"]):.2f} \\\\' for r in sweep]
 (P / "table_gpdk_tune.tex").write_text("\n".join(out) + "\n")
+# conference version: short names, no GBW column
+short = {"base2020": "2020 baseline", "regain": "Same-gain base.", "proposed": "Proposed"}
+out = []
+for c in short:
+    n, z = nn35(c), noise[c]
+    zt = float(n["Zt100M_dBohm"])
+    out.append(f'{short[c]} & {zt:.1f} & {float(n["peak_dBohm"]) - zt:.1f} & {float(n["f3dB_GHz"]):.1f} & {float(n["Idd_mA"]):.2f} & {float(z["in_5GHz_pA"]):.1f} \\\\')
+(P / "table_gpdk_nom_c.tex").write_text("\n".join(out) + "\n")
+out = []
+for c in short:
+    z, b, p, i = span(c, "Zt100M_dBohm"), span(c, "f3dB_GHz"), span(c, None, pk), span(c, "Idd_mA")
+    out.append(f'{short[c]} & {z[0]:.1f}--{z[1]:.1f} & {b[0]:.1f}--{b[1]:.1f} & {p[0]:.1f}--{p[1]:.1f} & {i[0]:.2f}--{i[1]:.2f} \\\\')
+(P / "table_gpdk_corner_c.tex").write_text("\n".join(out) + "\n")
 print("ok")
