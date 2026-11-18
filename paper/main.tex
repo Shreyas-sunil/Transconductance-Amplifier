@@ -15,7 +15,7 @@
 \maketitle
 
 \begin{abstract}
-A current-mirror transimpedance amplifier (TIA) that uses a \SI{2.4}{nH} spiral inductor as global feedback is re-examined with a BSIM4 device model, and an inductorless replacement is proposed. Re-simulated as drawn with the 90\,nm Predictive Technology Model, the published circuit delivers \BZt\,dB$\Omega$ with an \BPk\,dB resonance at \BFpk\,GHz. A fitting study locates the discrepancy: with the stated \SI{2.4}{nH}, no combination of PMOS gate biases, spiral loss and photodiode and load capacitance comes closer to the published curve than \DgRmsBestL\,dB rms, and every such case resonates, whereas the same circuit with less than about \DgLfMax\,pH of feedback inductance and a bias of about \DgIdNoL\,\si{\micro A} per mirror branch matches it to \DgRmsNoL\,dB rms. The published response is therefore that of the topology without effective inductive feedback. For a fair reference, the baseline topology is also re-optimised under the constraints used for the new design. The proposed circuit keeps the common-gate input and the mirror, biases them as a flipped-voltage-follower stage, and closes the loop with a source follower whose gate is driven from the output through a MOS resistor controlled by one voltage, $V_{tune}$. In simulation at \SI{1}{V} it reaches \PZt\,dB$\Omega$ and \PBW\,GHz with \PPk\,dB peaking, \PInFive\,pA/$\sqrt{\text{Hz}}$ input-referred noise at \SI{5}{GHz} and \PPow\,mW, for a \SI{50}{fF} photodiode and a \SI{30}{fF} load. At the same gain the best re-optimised baseline reaches \RgBw\,GHz, so the proposed circuit gives \BwRatioGain\ times the bandwidth, but at higher power and noise density; at its own best operating point the re-optimised baseline reaches a similar gain-bandwidth product (\RbGbw\ against \PGbw\,T$\Omega$Hz) at a quarter of the power. $V_{tune}$ moves the bandwidth from \TuneMin\ to \TuneMax\,GHz with less than \SI{1}{dB} peaking and removes the peaking that process, voltage and temperature shifts introduce (from \PvtPkMax\,dB to at most \PvtPkTMax\,dB over fifteen conditions). Without further measures the input stage overloads at a few tens of microamperes of average photocurrent. A DC-cancellation loop that regulates the follower current, at a cost of \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise at \SI{5}{GHz}, keeps the bandwidth within \SI{10}{\percent} and the gain within \SI{1}{dB} up to \DcLimit\,\si{\micro A}.
+A current-mirror transimpedance amplifier (TIA) that uses a \SI{2.4}{nH} spiral inductor as global feedback is re-examined with a BSIM4 device model, and an inductorless replacement is proposed. Re-simulated as drawn with the 90\,nm Predictive Technology Model, the published circuit delivers \BZt\,dB$\Omega$ with an \BPk\,dB resonance at \BFpk\,GHz. A fitting study locates the discrepancy: with the stated \SI{2.4}{nH}, no combination of PMOS gate biases, spiral loss and photodiode and load capacitance comes closer to the published curve than \DgRmsBestL\,dB rms, and every such case resonates, whereas the same circuit with less than about \DgLfMax\,pH of feedback inductance and a bias of about \DgIdNoL\,\si{\micro A} per mirror branch matches it to \DgRmsNoL\,dB rms. The published response is therefore that of the topology without effective inductive feedback. For a fair reference, the baseline topology is also re-optimised under the constraints used for the new design. The proposed circuit keeps the common-gate input and the mirror, biases them as a flipped-voltage-follower stage, and closes the loop with a source follower whose gate is driven from the output through a MOS resistor controlled by one voltage, $V_{tune}$. In simulation at \SI{1}{V} it reaches \PZt\,dB$\Omega$ and \PBW\,GHz with \PPk\,dB peaking, \PInFive\,pA/$\sqrt{\text{Hz}}$ input-referred noise at \SI{5}{GHz} and \PPow\,mW, for a \SI{50}{fF} photodiode and a \SI{30}{fF} load. At the same gain the best re-optimised baseline reaches \RgBw\,GHz, so the proposed circuit gives \BwRatioGain\ times the bandwidth, but at higher power and noise density; at its own best operating point the re-optimised baseline reaches a similar gain-bandwidth product (\RbGbw\ against \PGbw\,T$\Omega$Hz) at a quarter of the power. $V_{tune}$ moves the bandwidth from \TuneMin\ to \TuneMax\,GHz with less than \SI{1}{dB} peaking and removes the peaking that process, voltage and temperature shifts introduce (from \PvtPkMax\,dB to at most \PvtPkTMax\,dB over fifteen conditions). Without further measures the input stage overloads at a few tens of microamperes of average photocurrent. A DC-cancellation loop that regulates the follower current, at a cost of \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise at \SI{5}{GHz}, keeps the bandwidth within \SI{10}{\percent} and the gain within \SI{1}{dB} up to \DcLimit\,\si{\micro A}. The comparison was repeated in Cadence Spectre with the GPDK090 foundry models, which have real process corners. There the proposed circuit gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA} and \SI{1}{V}, and \SI{51.8}{} to \SI{55.0}{dB\ohm} over fifteen corner and temperature points. The bandwidth control range is narrower than in the PTM runs, \SI{5.7}{} to \SI{7.9}{GHz}, and a same-gain baseline uses fourteen times less current and has lower noise density; only the nominal, tuning, corner and noise results were repeated in GPDK090.
 \end{abstract}
 
 \noindent\textbf{Keywords:} transimpedance amplifier; active inductor; current mirror; flipped voltage follower; optical receiver; bandwidth tuning; 90\,nm CMOS.
@@ -35,7 +35,7 @@ This paper asks two questions. First, how does the published circuit behave with
 \item A DC-cancellation loop that removes the input overload limit by regulating the follower current, with its loop gain, settling, noise cost, corners and mismatch (Section~\ref{sec:dcc}).
 \item A cost account that separates what the tuning network does from what it does not, including the load range over which the inductive zero helps (Section~\ref{sec:discussion}).
 \end{enumerate}
-All results are schematic-level simulations with a predictive model; no layout was extracted and no chip was fabricated.
+Sections~\ref{sec:baseline} to~\ref{sec:dcc} use a predictive model; Section~\ref{sec:gpdk} repeats the nominal, tuning, corner and noise results with the GPDK090 foundry models in Cadence. All results are schematic-level simulations; no layout was extracted and no chip was fabricated.
 
 \section{Baseline circuit re-examined}\label{sec:baseline}
 \subsection{Circuit and test conditions}
@@ -367,6 +367,64 @@ Across the \DcPvtN\ process, voltage and temperature conditions the dark cancell
 \label{fig:dcc}
 \end{figure}
 
+\section{Cross-check with the GPDK090 foundry models}\label{sec:gpdk}
+\subsection{Setup}
+The three circuits that carry the argument were rebuilt as Cadence Virtuoso schematics and simulated with Spectre and the GPDK090 v4.6 models (\texttt{nmos1v}, \texttt{pmos1v}) at \SI{1}{V}, with $C_{PD}=\SI{50}{fF}$ and $C_L=\SI{30}{fF}$ as before. The 2020 baseline keeps the sizes of Section~\ref{sec:baseline} and the \SI{2.4}{nH} inductor. The proposed circuit uses the bias generator and the sizes in the repository; $V_{tune}$ is a design variable set to \SI{0.24}{V}. The same-gain baseline is the 2020 topology re-biased to the proposed circuit's gain, with a \SI{43}{\ohm} series resistor in the feedback path and fixed gate-bias sources. The minimum gate length in the kit is \SI{100}{nm}, not \SI{90}{nm}, so every device uses $L\geq\SI{100}{nm}$ and the numbers are not comparable digit for digit with the PTM sections. Gain is the transimpedance magnitude at \SI{100}{MHz}; bandwidth is the \SI{3}{dB} point from that value; noise is input-referred current noise from a Spectre noise analysis over \SI{10}{MHz} to \SI{10}{GHz}. The corner set is the kit's NN, SS, FF, FS and SF sections at $-40$, 35 and \SI{125}{\celsius}.
+
+\subsection{Nominal results}
+Table~\ref{tab:gnom} lists the nominal point (NN, \SI{35}{\celsius}). The proposed circuit's gain and power are close to the PTM figures (\PZt\,dB$\Omega$ and \PPow\,mW), and its bandwidth is \SI{7.8}{GHz} against \PBW\,GHz. The 2020 baseline as drawn gives \SI{40.5}{dB\ohm} with an \SI{8.9}{dB} resonance, below the published \SI{43.92}{dB\ohm} and flat band, which is what the PTM re-simulation also found. At the proposed circuit's gain, the same-gain baseline reaches \SI{3.3}{GHz}. The proposed circuit has 2.3 times that bandwidth and 1.9 times the gain-bandwidth product, but draws about fourteen times the current and has 1.8 times the noise density at \SI{5}{GHz}. The same-gain baseline is cheaper in power and noise at its own gain and the proposed circuit does not win on efficiency; its advantage is bandwidth at high gain and the absence of a spiral. The baseline's gate biases are fixed voltage sources, whereas the proposed circuit's come from a current-referenced bias generator, so the corner comparison below favours the proposed circuit.
+
+\begin{table}[t]
+\centering
+\caption{GPDK090 nominal point (NN, \SI{35}{\celsius}, \SI{1}{V}). Peaking is the maximum above the \SI{100}{MHz} gain. GBW is gain times bandwidth.}
+\label{tab:gnom}
+\footnotesize\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lllllll}
+\toprule
+Circuit & Gain (dB$\Omega$) & Peak (dB) & BW (GHz) & GBW (T$\Omega$Hz) & $I_{DD}$ (mA) & $i_n$ at \SI{5}{GHz} (pA/$\sqrt{\text{Hz}}$) \\
+\midrule
+\tableinput table_gpdk_nom.tex
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tuning range}
+Table~\ref{tab:gtune} gives the sweep of $V_{tune}$ at NN and \SI{35}{\celsius}. Gain stays at \SI{53.8}{dB\ohm} throughout. Bandwidth rises from \SI{5.70}{GHz} at \SI{0}{V} to \SI{7.88}{GHz} at \SI{0.30}{V}, a ratio of 1.38:1, with peaking at or below \SI{1}{dB} up to \SI{0.28}{V}. Beyond \SI{0.30}{V} the peaking reaches \SI{3.5}{dB} at \SI{0.40}{V} and the bandwidth falls. The PTM sections report a wider range (\TuneMin\ to \TuneMax\,GHz); the foundry models do not reproduce it.
+
+\begin{table}[t]
+\centering
+\caption{GPDK090 $V_{tune}$ sweep of the proposed circuit (NN, \SI{35}{\celsius}).}
+\label{tab:gtune}
+\footnotesize
+\begin{tabular}{llll}
+\toprule
+$V_{tune}$ (V) & Gain (dB$\Omega$) & Peak (dB) & BW (GHz) \\
+\midrule
+\tableinput table_gpdk_tune.tex
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Corners and noise}
+Table~\ref{tab:gcorn} gives the range over fifteen conditions with $V_{tune}$ fixed at \SI{0.24}{V}. The proposed circuit's gain varies by \SI{3.2}{dB} and its current by \SI{0.16}{mA}, against \SI{11.1}{dB} and \SI{0.06}{mA} for the same-gain baseline, whose bandwidth swings from \SI{1.6}{} to \SI{16.8}{GHz}. The proposed circuit's bandwidth spans \SI{3.4}{} to \SI{11.2}{GHz}. Peaking reaches \SI{4.2}{dB} in the FS corner at $-40\,^\circ$C, so a fixed $V_{tune}$ does not hold peaking down; whether re-tuning each corner removes it, as in the PTM study, was not run in GPDK090. Input-referred current noise at \SI{5}{GHz} is 15.8\,pA/$\sqrt{\text{Hz}}$ for the proposed circuit, 8.7\,pA/$\sqrt{\text{Hz}}$ for the same-gain baseline and 25.1\,pA/$\sqrt{\text{Hz}}$ for the 2020 baseline; integrated over \SI{10}{MHz} to \SI{10}{GHz} the values are \SI{1.77}{}, \SI{0.87}{} and \SI{2.47}{\micro A}.
+
+\begin{table}[t]
+\centering
+\caption{GPDK090 minimum and maximum over NN, SS, FF, FS, SF at $-40$, 35 and \SI{125}{\celsius}.}
+\label{tab:gcorn}
+\footnotesize\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lllll}
+\toprule
+Circuit & Gain (dB$\Omega$) & BW (GHz) & Peak (dB) & $I_{DD}$ (mA) \\
+\midrule
+\tableinput table_gpdk_corner.tex
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{What was not repeated}
+Monte Carlo, transient and eye simulation, the load and photodiode-capacitance sweeps, the loop gains and stability, the DC-cancellation loop and its corners were run only with the PTM models. The GPDK090 results are schematic-level and use ideal sources for the reference current and the baseline's biases.
+
 \section{Discussion}\label{sec:discussion}
 \subsection{What the active inductor does and does not do}
 The simulations support four statements. (i) The feedback element needs no spiral. A \SI{2.4}{nH} square spiral with 3.5 turns, \SI{6}{\micro m} tracks and \SI{2}{\micro m} spacing has an outer side of about \SpiralSide\,\si{\micro m} by the modified Wheeler expression \cite{mohanl}, or \SpiralArea\,mm$^2$. $M_f$, $M_t$ and a \SI{30}{fF} capacitor at an assumed \SI{1.5}{fF/\micro m^2} occupy about \AIArea\,\si{\micro m^2} when a five-fold allowance is made for contacts, spacing and routing, a ratio of roughly \AreaRatio. Both figures are estimates from dimensions, not layouts. (ii) One control voltage moves the bandwidth over a \TuneRatio:1 range at constant gain. (iii) The same voltage removes peaking caused by process, supply, temperature and photodiode spread. (iv) For loads of \SI{150}{fF} and above the inductive zero extends the bandwidth beyond that of resistive feedback.
@@ -403,15 +461,15 @@ This work with DCC & 90\,nm PTM, \SI{1}{V} & \DcZtDark & \DcBwDark & \DcPow & ac
 \end{table}
 
 \subsection{Limitations}
-The results are schematic-level simulations with a predictive model. Layout parasitics, especially at the input and at node $N$, will lower the bandwidth, and the synthetic corners and assumed mismatch coefficients stand in for foundry data. The photodiode is a current source with a capacitor; bond-wire or bump inductance and electrostatic-discharge protection are not modelled. The reference current is ideal; the cancellation threshold and the slow-corner bandwidth with the loop depend on it, so a real design needs a bandgap-derived reference. The cancellation loop's low-frequency corner (up to \DcFloMax\,MHz) limits long runs of identical bits, and the step response was simulated without data on top. The diagnosis of the published baseline rests on digitised points and on assumed capacitances, and identifies conditions consistent with the published curve rather than the original simulation settings. The \SI{37}{mV} saturation margin of $M_{3b}$ is small. The eye diagrams contain no noise. Each of these is a necessary next step before the circuit could be claimed to be ready for fabrication.
+The results are schematic-level simulations, mostly with a predictive model and, for Section~\ref{sec:gpdk}, with the GPDK090 foundry models at $L\geq\SI{100}{nm}$. Layout parasitics, especially at the input and at node $N$, will lower the bandwidth, and the synthetic corners and assumed mismatch coefficients of the PTM sections stand in for foundry data, and mismatch was not run with the foundry models. The photodiode is a current source with a capacitor; bond-wire or bump inductance and electrostatic-discharge protection are not modelled. The reference current is ideal; the cancellation threshold and the slow-corner bandwidth with the loop depend on it, so a real design needs a bandgap-derived reference. The cancellation loop's low-frequency corner (up to \DcFloMax\,MHz) limits long runs of identical bits, and the step response was simulated without data on top. The diagnosis of the published baseline rests on digitised points and on assumed capacitances, and identifies conditions consistent with the published curve rather than the original simulation settings. The \SI{37}{mV} saturation margin of $M_{3b}$ is small. The eye diagrams contain no noise. Each of these is a necessary next step before the circuit could be claimed to be ready for fabrication.
 
 \section{Conclusion}
 A published 90\,nm current-mirror TIA with a spiral feedback inductor was re-simulated with a BSIM4 model and found to give \BZt\,dB$\Omega$ with an \BPk\,dB resonance, because its common-gate device is left in triode. A fitting study showed that no bias, spiral loss or capacitance brings the circuit with a \SI{2.4}{nH} inductor within \DgRmsBestL\,dB of the published curve, while the same circuit without effective inductive feedback and at about a fifth of the drawn bias current matches it to \DgRmsNoL\,dB; the published response is not a property of the circuit as drawn. Re-optimising the baseline topology under the same constraints gave a fairer reference, which reaches a similar gain-bandwidth product to the proposed design at a quarter of the power but only \RgBw\,GHz at the proposed design's gain.
 
-The proposed replacement uses a flipped-voltage-follower input and a source follower with a voltage-tuned gate network as feedback. In simulation at \SI{1}{V} and \PPow\,mW it reaches \PZt\,dB$\Omega$, \PBW\,GHz and \PInFive\,pA/$\sqrt{\text{Hz}}$ at \SI{5}{GHz} without an inductor, one voltage sets its bandwidth between \TuneMin\ and \TuneMax\,GHz, and the same voltage holds peaking at or below \SI{0.5}{dB} across the process, voltage, temperature and mismatch cases examined. A DC-cancellation loop that regulates the follower current raises the tolerable average photocurrent from about \PrLimit\ to \DcLimit\,\si{\micro A} for \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise. The tuning network does not extend the maximum bandwidth at light loads. Post-layout verification with a foundry kit and measurement are the next steps.
+The proposed replacement uses a flipped-voltage-follower input and a source follower with a voltage-tuned gate network as feedback. In simulation at \SI{1}{V} and \PPow\,mW it reaches \PZt\,dB$\Omega$, \PBW\,GHz and \PInFive\,pA/$\sqrt{\text{Hz}}$ at \SI{5}{GHz} without an inductor, one voltage sets its bandwidth between \TuneMin\ and \TuneMax\,GHz, and the same voltage holds peaking at or below \SI{0.5}{dB} across the process, voltage, temperature and mismatch cases examined. A DC-cancellation loop that regulates the follower current raises the tolerable average photocurrent from about \PrLimit\ to \DcLimit\,\si{\micro A} for \DcPowAdd\,\si{\micro W} and \DcNoisePct\,\% more noise. The tuning network does not extend the maximum bandwidth at light loads. Repeating the nominal, tuning, corner and noise runs with the GPDK090 foundry models gives \SI{53.8}{dB\ohm} and \SI{7.8}{GHz} at \SI{0.97}{mA}, a gain spread of \SI{3.2}{dB} over fifteen corner and temperature points, and a bandwidth control range of \SI{5.7}{} to \SI{7.9}{GHz}, narrower than in the PTM runs. A same-gain baseline reaches \SI{3.3}{GHz} at \SI{0.07}{mA} with lower noise density, so the advantage of the proposed circuit is bandwidth at high gain and the absence of a spiral, not efficiency. Monte Carlo, transient, loading and the cancellation loop remain to be run with the foundry models; post-layout verification and measurement are the next steps.
 
 \section*{Data availability}
-The netlists, the model card, the scripts that run every simulation and the raw results are available in the project repository.
+The netlists, the model card, the scripts that run every simulation and the raw results are available in the project repository, including the Cadence SKILL schematic builders, the OCEAN scripts and the GPDK090 result files. The GPDK090 model files themselves are the foundry's and are not redistributed.
 
 \begin{thebibliography}{99}
 \bibitem{razavi} B. Razavi, \emph{Design of Integrated Circuits for Optical Communications}, 2nd ed. Hoboken, NJ, USA: Wiley, 2012.
