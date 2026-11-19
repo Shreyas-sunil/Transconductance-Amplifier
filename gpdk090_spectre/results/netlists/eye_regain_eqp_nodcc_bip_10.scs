@@ -1,0 +1,23 @@
+simulator lang=spectre
+global 0
+include "/home/buet/cadence/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+simOpts options temp=35 tnom=27 reltol=1e-4 vabstol=1e-7 iabstol=1e-13 gmin=1e-15
+parameters cl=3e-14 cpd=5e-14 csc=1 idc=0 rsc=1 vdd=1 vtn=0.24
+parameters p_lf=3.57172e-09 p_rsl=27.1361 p_vg2b=0.690969 p_vg3b=0.267078 p_w1=0.201605 p_w2=0.2 p_w2b=3.74505 p_w3=1.42823 p_w3b=7.91746
+Vdd (vdd 0) vsource dc=vdd
+Vg3b (g3b 0) vsource dc=p_vg3b
+Vg2b (g2b 0) vsource dc=p_vg2b
+M2b (n g2b vdd vdd) gpdk090_pmos1v w=(p_w2b)*1u l=100n ad=(p_w2b)*0.58*1p as=(p_w2b)*0.58*1p pd=2*((p_w2b)+0.58)*1u ps=2*((p_w2b)+0.58)*1u
+M1 (n vdd inp 0) gpdk090_nmos1v w=(p_w1)*1u l=100n ad=(p_w1)*0.58*1p as=(p_w1)*0.58*1p pd=2*((p_w1)+0.58)*1u ps=2*((p_w1)+0.58)*1u
+IPl (n g2) iprobe
+M2 (inp g2 0 0) gpdk090_nmos1v w=(p_w2)*1u l=100n ad=(p_w2)*0.58*1p as=(p_w2)*0.58*1p pd=2*((p_w2)+0.58)*1u ps=2*((p_w2)+0.58)*1u
+M3 (outp n 0 0) gpdk090_nmos1v w=(p_w3)*1u l=100n ad=(p_w3)*0.58*1p as=(p_w3)*0.58*1p pd=2*((p_w3)+0.58)*1u ps=2*((p_w3)+0.58)*1u
+M3b (outp g3b vdd vdd) gpdk090_pmos1v w=(p_w3b)*1u l=100n ad=(p_w3b)*0.58*1p as=(p_w3b)*0.58*1p pd=2*((p_w3b)+0.58)*1u ps=2*((p_w3b)+0.58)*1u
+Lf (outp xl) inductor l=p_lf
+Rsl (xl fs) resistor r=max(p_rsl,1e-3)
+IPg (fs inp) iprobe
+Cpd (inp 0) capacitor c=cpd
+Cl (outp 0) capacitor c=cl
+Iin (0 inp) isource type=pwl file="/tmp/tia_work/prbs_1e+10.pwl"
+save outp inp
+tr tran stop=2.74e-08 maxstep=2.5e-12

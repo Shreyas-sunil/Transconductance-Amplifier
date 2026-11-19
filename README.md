@@ -13,6 +13,13 @@ limit, and (6) everything needed to reproduce the results and the paper.
 **Status: schematic-level simulation only.** No layout, no foundry kit, no silicon. Corners and mismatch
 coefficients are assumed values. See "Known limits" below before quoting any number.
 
+## CONECCT 2027 revision (GPDK090, Spectre)
+
+`paper_conecct2027/` is the revised, anonymised six-page paper; every number in it comes from the
+GPDK090 / Spectre 12.1 campaign in `gpdk090_spectre/` (534 runs, schematic level). See
+`paper_conecct2027/CHANGE_REPORT.md` and `REVIEWS.md`. GPDK090 is a generic kit, not a foundry
+process; the PTM90 results below are kept separately and are not mixed with it.
+
 ## Headline results
 
 Conditions: ngspice 42, PTM 90 nm BSIM4, 1 V, 35 °C, 50 fF photodiode, 30 fF load.

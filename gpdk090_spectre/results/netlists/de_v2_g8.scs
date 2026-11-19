@@ -1,0 +1,59 @@
+simulator lang=spectre
+global 0
+include "/home/buet/cadence/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+simOpts options temp=35 tnom=27 reltol=1e-4 vabstol=1e-7 iabstol=1e-13 gmin=1e-15
+parameters cl=3e-14 cpd=5e-14 csc=1 idc=0 rsc=1 vdd=1 vtn=0.1909103
+parameters p_ca=4.0244254e-14 p_iref=3e-05 p_rb=4200 p_rn=5000 p_w1=4.1559269 p_w2=3.3701356 p_w3=9.0685208 p_w3b=40 p_wbn=0.4 p_wf=3.817118 p_wt=6.6154518
+Vdd (vdd 0) vsource dc=vdd
+Iref (vbp 0) isource dc=p_iref
+Mbp (vbp vbp vdd vdd) gpdk090_pmos1v w=2*1u l=180n ad=2*0.58*1p as=2*0.58*1p pd=2*(2+0.58)*1u ps=2*(2+0.58)*1u
+Mbr (vb1 vbp vdd vdd) gpdk090_pmos1v w=2*1u l=180n ad=2*0.58*1p as=2*0.58*1p pd=2*(2+0.58)*1u ps=2*(2+0.58)*1u
+Mbn (vb1 vb1 vr 0) gpdk090_nmos1v w=(p_wbn)*1u l=100n ad=(p_wbn)*0.58*1p as=(p_wbn)*0.58*1p pd=2*((p_wbn)+0.58)*1u ps=2*((p_wbn)+0.58)*1u
+Rb (vr 0) resistor r=p_rb*rsc
+Cb (vb1 0) capacitor c=2p
+Rn (vdd n) resistor r=p_rn*rsc
+M1 (n vb1 inp 0) gpdk090_nmos1v w=(p_w1)*1u l=100n ad=(p_w1)*0.58*1p as=(p_w1)*0.58*1p pd=2*((p_w1)+0.58)*1u ps=2*((p_w1)+0.58)*1u
+IPl (n g2) iprobe
+M2 (inp g2 0 0) gpdk090_nmos1v w=(p_w2)*1u l=100n ad=(p_w2)*0.58*1p as=(p_w2)*0.58*1p pd=2*((p_w2)+0.58)*1u ps=2*((p_w2)+0.58)*1u
+M3 (outp n 0 0) gpdk090_nmos1v w=(p_w3)*1u l=100n ad=(p_w3)*0.58*1p as=(p_w3)*0.58*1p pd=2*((p_w3)+0.58)*1u ps=2*((p_w3)+0.58)*1u
+M3b (outp vbp vdd vdd) gpdk090_pmos1v w=(p_w3b)*1u l=180n ad=(p_w3b)*0.58*1p as=(p_w3b)*0.58*1p pd=2*((p_w3b)+0.58)*1u ps=2*((p_w3b)+0.58)*1u
+Vt (vt 0) vsource dc=vtn
+Mf (vdd g fs 0) gpdk090_nmos1v w=(p_wf)*1u l=100n ad=(p_wf)*0.58*1p as=(p_wf)*0.58*1p pd=2*((p_wf)+0.58)*1u ps=2*((p_wf)+0.58)*1u
+Mt (g vt outp outp) gpdk090_pmos1v w=(p_wt)*1u l=100n ad=(p_wt)*0.58*1p as=(p_wt)*0.58*1p pd=2*((p_wt)+0.58)*1u ps=2*((p_wt)+0.58)*1u
+Ca (g inp) capacitor c=p_ca*csc
+IPg (fs inp) iprobe
+Cpd (inp 0) capacitor c=cpd
+Cl (outp 0) capacitor c=cl
+Iin (0 inp) isource dc=idc mag=1 
+pset paramset {
+p_ca p_iref p_rb p_rn p_w1 p_w2 p_w3 p_w3b p_wbn p_wf p_wt vtn
+4.0244254e-14 3e-05 4200 5000 4.1559269 3.3701356 9.0685208 40 0.4 3.817118 6.6154518 0.1909103
+1e-14 3e-05 4648.083 3591.8198 6.7078305 2.844584 8.0249306 23.047207 0.4 1.8425819 17.881003 0.4
+1e-14 3.4824108e-05 3838.305 10000 7.7171894 10 7.5195756 20.005182 0.4 1.1638105 24 0.4
+6e-14 3.1681424e-05 2242.8297 8761.9062 3.987503 1 10.627424 40 0.4 1 20.377056 0.1698439
+2.9507957e-14 3.4055036e-05 4584.6481 10000 4.746364 4.7715345 2.1257181 37.111816 0.4 1.6693596 18.625797 0.4
+3.7792144e-14 3e-05 6772.3269 7042.1806 5.0895915 10 14.271789 28.97007 0.4 4.1529735 2.8823446 0.015178781
+5.5252345e-14 3e-05 5551.2639 6394.7581 3.5969109 8.3035881 2 37.893197 0.4 3.6477423 11.290484 0
+2.49296e-14 7e-05 4780.1335 4625.0377 4.1905153 1 3.1954534 8.5164089 0.4 2.0795556 8.2886282 0.28321205
+5.7604274e-14 3e-05 4562.9709 5462.6769 3.6345607 9.7202398 13.788674 23.153971 0.4 3.6474243 10.38823 0.018492489
+2.3188221e-14 4.2056927e-05 3404.1777 4940.6707 9.272617 7.5315756 2 5.9146503 0.4 1 24 0.047878318
+3.896655e-14 3e-05 4830.7366 5986.2938 7.9790808 1 2 20.813043 0.4 1 19.881491 0.4
+5.2087242e-14 3.3355908e-05 6997.4029 9272.7858 12 8.194655 2 20.21777 0.4 3.3630207 14.631623 0.17487993
+1e-14 4.2901052e-05 3343.7152 5053.7345 6.5782629 5.3350138 16.336526 11.725462 0.4 2.1171943 6.4501379 0.18350399
+4.894597e-14 3.2318965e-05 3080.4852 5447.6289 8.5303136 10 20 35.578213 0.4 5.8552813 12.801393 0.033517568
+1e-14 4.9941428e-05 2531.3166 4443.5604 3.8011435 1 2 5 0.4 1 19.982218 0.4
+2.4898678e-14 6.7789826e-05 2000 3035.3683 2.0654467 1 10.590919 20.793924 0.4 1.9624444 6.4744907 0.10691751
+6e-14 3.4824108e-05 2687.7863 3607.2835 5.9658581 4.0721203 14.334909 40 0.4 1.0516885 16.180101 0.11870754
+1e-14 5e-05 4127.9493 5676.7867 7.9077683 4.9157253 11.547019 10.505227 0.4 5.0886454 4.3742902 0.24622468
+2.8146763e-14 3e-05 5000.3231 9389.2801 12 1 2 11.406545 0.4 1.1777437 20.717307 0
+1e-14 4.8390276e-05 7226.6472 7503.1237 6.3987332 1 2.3890962 40 0.4 2.974536 5.6235616 0.23167051
+1.4234012e-14 3.1008854e-05 7155.0374 3135.7253 7.2265606 10 8.9456317 5.046863 0.4 1 17.900982 0
+2.7928968e-14 3.3976657e-05 6802.743 6832.2058 6.289497 10 13.189826 16.007981 0.4 1 21.074141 0.026721177
+2.6776584e-14 5.0408612e-05 2000 2000 2.4362251 10 15.92166 18.546413 0.4 7.4311325 24 0.014442858
+3.103345e-14 3e-05 5945.6084 3453.4776 11.212446 10 3.4773809 23.733697 0.4 3.8685699 13.948037 0
+}
+save outp inp n Vdd:p M1:ids M1:vgs M1:vds M1:vth M1:vdsat M1:gm M1:gds M1:gmbs M1:region M1:cgs M1:cgd M2:ids M2:vgs M2:vds M2:vth M2:vdsat M2:gm M2:gds M2:gmbs M2:region M2:cgs M2:cgd M3:ids M3:vgs M3:vds M3:vth M3:vdsat M3:gm M3:gds M3:gmbs M3:region M3:cgs M3:cgd M3b:ids M3b:vgs M3b:vds M3b:vth M3b:vdsat M3b:gm M3b:gds M3b:gmbs M3b:region M3b:cgs M3b:cgd Mf:ids Mf:vgs Mf:vds Mf:vth Mf:vdsat Mf:gm Mf:gds Mf:gmbs Mf:region Mf:cgs Mf:cgd Mt:ids Mt:vgs Mt:vds Mt:vth Mt:vdsat Mt:gm Mt:gds Mt:gmbs Mt:region Mt:cgs Mt:cgd Mbp:ids Mbp:vgs Mbp:vds Mbp:vth Mbp:vdsat Mbp:gm Mbp:gds Mbp:gmbs Mbp:region Mbp:cgs Mbp:cgd Mbr:ids Mbr:vgs Mbr:vds Mbr:vth Mbr:vdsat Mbr:gm Mbr:gds Mbr:gmbs Mbr:region Mbr:cgs Mbr:cgd Mbn:ids Mbn:vgs Mbn:vds Mbn:vth Mbn:vdsat Mbn:gm Mbn:gds Mbn:gmbs Mbn:region Mbn:cgs Mbn:cgd
+swp sweep paramset=pset {
+ dcop dc
+ acx ac start=1e7 stop=1e11 dec=20
+}

@@ -1,0 +1,32 @@
+\documentclass[border=4pt]{standalone}
+\usepackage[siunitx]{circuitikz}
+\begin{document}
+\begin{circuitikz}[scale=1, transform shape, line width=0.6pt]
+\ctikzset{tripoles/mos style/arrows}
+\draw (0,0) node[nmos, xscale=-1] (M2) {} (0,2.2) node[nmos, xscale=-1] (M1) {} (0,4.4) node[pmos, xscale=-1] (M2b) {};
+\draw (5,0) node[nmos] (M3) {} (5,4.4) node[pmos] (M3b) {};
+\node[right] at (0.2,-0.75) {$M_2$}; \node[left] at (-0.25,2.2) {$M_1$}; \node[left] at (-0.25,4.4) {$M_{2b}$};
+\node[right] at (5.25,0) {$M_3$}; \node[right] at (5.25,4.4) {$M_{3b}$};
+% rails
+\draw (-0.6,5.6) -- (5.8,5.6) node[right] {$V_{DD}=\SI{1}{V}$};
+\draw (M2b.S) -- (0,5.6) (M3b.S) -- (5,5.6);
+\draw (M2.S) node[ground] {} (M3.S) node[ground] {};
+% stack
+\draw (M2b.D) -- (M1.D) (M1.S) -- (M2.D);
+\draw (M3b.D) -- (M3.D);
+% node N to mirror gates
+\draw (0,3.3) node[circ] {} -- (1.6,3.3) node[above right] {$N$} -- (1.6,0) node[circ] {};
+\draw (M2.G) -- (M3.G);
+% gates of M1 and M2b to VDD
+\draw (M1.G) -- (2.4,2.2) -- (2.4,5.6) node[circ] {} (M2b.G) -- (2.4,4.4) node[circ] {};
+\draw (M3b.G) -- ++(-0.5,0) node[left] {$V_{G3b}$};
+% feedback inductor
+\draw (0,1.1) node[circ] {} to[L, l=$L_f{=}\SI{2.4}{nH}$, *-*] (5,1.1);
+% input
+\draw (0,1.1) -- (-3.2,1.1) to[I, l_=$I_{PD}$, invert] (-3.2,-1) node[ground] {};
+\draw (-1.6,1.1) node[circ] {} to[C, l=$C_{PD}$] (-1.6,-1) node[ground] {};
+% output
+\draw (5,2.2) node[circ] {} -- (6.8,2.2) node[ocirc] {} node[right] {$V_{OUT}$};
+\draw (6.2,2.2) node[circ] {} to[C, l=$C_L$] (6.2,0.2) node[ground] {};
+\end{circuitikz}
+\end{document}
