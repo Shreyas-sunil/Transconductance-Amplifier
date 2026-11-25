@@ -1,0 +1,39 @@
+* RGC with PMOS current-mirror output and a negative-RC path from the mirror node
+* Run: ngspice -b var_cmnrc_robust.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=15.83u L=200n AD=3.165p AS=3.165p PD=32.05u PS=32.05u
+M1 d1 x in 0 nmos90 W=17.7u L=100n AD=3.54p AS=3.54p PD=35.8u PS=35.8u
+M2 x in 0 0 nmos90 W=36.29u L=100n AD=7.257p AS=7.257p PD=72.97u PS=72.97u
+R2 vdd x 1.6903k
+Mp1 d1 d1 vdd vdd pmos90 W=29.72u L=100n AD=5.944p AS=5.944p PD=59.84u PS=59.84u
+Mp2 out d1 vdd vdd pmos90 W=35.51u L=100n AD=7.103p AS=7.103p PD=71.43u PS=71.43u
+RL out 0 550.8
+M3 x d1 s3 0 nmos90 W=2.632u L=100n AD=0.5264p AS=0.5264p PD=5.664u PS=5.664u
+R3 s3 0 1.5322k
+C3 s3 0 28.679f
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata var_cmnrc_robust_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata var_cmnrc_robust_noise.txt inoise_spectrum
+.endc
+.end

@@ -1,0 +1,37 @@
+* Abdollahi 2025 MDFRGC re-sized for the nominal corner only (higher gain, corner-sensitive)
+* Run: ngspice -b base_mdfrgc_nominal.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=7.995u L=200n AD=1.599p AS=1.599p PD=16.39u PS=16.39u
+M1 out x in 0 nmos90 W=6.663u L=100n AD=1.333p AS=1.333p PD=13.73u PS=13.73u
+R1 vdd out 2.4582k
+M2 x in 0 0 nmos90 W=30.35u L=100n AD=6.071p AS=6.071p PD=61.11u PS=61.11u
+R2 vdd x 830.97
+M3 x out s3 0 nmos90 W=4.743u L=100n AD=0.9485p AS=0.9485p PD=9.885u PS=9.885u
+R3 s3 0 2.3197k
+C3 s3 0 90.269f
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata base_mdfrgc_nominal_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata base_mdfrgc_nominal_noise.txt inoise_spectrum
+.endc
+.end

@@ -1,0 +1,36 @@
+* Current-mirror TIA with PMOS gate-resistor active inductor - reconstruction
+* Run: ngspice -b ref_shaaban_AP.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibp vbp 0 dc 20u
+Mdp vbp vbp vdd vdd pmos90 W=2u L=200n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Cbp vbp vdd 2p
+Mp1 in vbp vdd vdd pmos90 W=29.84u L=200n AD=5.968p AS=5.968p PD=60.08u PS=60.08u
+M1 in in 0 0 nmos90 W=5.591u L=100n AD=1.118p AS=1.118p PD=11.58u PS=11.58u
+M2 out in 0 0 nmos90 W=20.22u L=100n AD=4.044p AS=4.044p PD=40.84u PS=40.84u
+Rf out in 19.217k
+Ma out ga vdd vdd pmos90 W=7.568u L=100n AD=1.514p AS=1.514p PD=15.54u PS=15.54u
+Rg ga out 13.553k
+RL vdd out 101.51k
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata ref_shaaban_AP_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata ref_shaaban_AP_noise.txt inoise_spectrum
+.endc
+.end

@@ -1,0 +1,25 @@
+// RGC with PMOS current-mirror output (no negative-RC path)
+// Run:  spectre var_cmrgc_robust.scs
+simulator lang=spectre
+global 0
+include "ptm90.lib"   // SPICE-syntax PTM card (Spectre reads it as SPICE)
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos90 w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos90 w=17.06u l=200n ad=3.413p as=3.413p pd=34.53u ps=34.53u
+M1 (d1 x in 0) nmos90 w=27.2u l=100n ad=5.44p as=5.44p pd=54.8u ps=54.8u
+M2 (x in 0 0) nmos90 w=20.18u l=100n ad=4.035p as=4.035p pd=40.75u ps=40.75u
+R2 (vdd x) resistor r=1.4867k
+Mp1 (d1 d1 vdd vdd) pmos90 w=37.34u l=100n ad=7.468p as=7.468p pd=75.08u ps=75.08u
+Mp2 (out d1 vdd vdd) pmos90 w=38.84u l=100n ad=7.769p as=7.769p pd=78.09u ps=78.09u
+RL (out 0) resistor r=285.06
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin

@@ -1,0 +1,31 @@
+* PF-TIA re-sized under the same rules
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibp vbp 0 dc 20u
+Mdp vbp vbp vdd vdd pmos90 W=2u L=200n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Cbp vbp vdd 2p
+Vb1 vb1 0 dc 543.61m
+Rn vdd n 7.2148k
+M1 n vb1 in 0 nmos90 W=3.618u L=100n AD=0.7236p AS=0.7236p PD=7.636u PS=7.636u
+M2 in n 0 0 nmos90 W=2.682u L=100n AD=0.5363p AS=0.5363p PD=5.763u PS=5.763u
+M3 out n 0 0 nmos90 W=5.352u L=100n AD=1.07p AS=1.07p PD=11.1u PS=11.1u
+M3b out vbp vdd vdd pmos90 W=27.28u L=200n AD=5.456p AS=5.456p PD=54.96u PS=54.96u
+Mf vdd out in 0 nmos90 W=1.268u L=100n AD=0.2536p AS=0.2536p PD=2.936u PS=2.936u
+
+.ac dec 40 1Meg 100G
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

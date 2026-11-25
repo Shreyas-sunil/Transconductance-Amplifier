@@ -1,0 +1,25 @@
+// Current-mirror TIA with PMOS gate-resistor active inductor - reconstruction
+// Run:  spectre ref_shaaban_AP.scs
+simulator lang=spectre
+global 0
+include "ptm90.lib"   // SPICE-syntax PTM card (Spectre reads it as SPICE)
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibp (vbp 0) isource dc=20u type=dc
+Mdp (vbp vbp vdd vdd) pmos90 w=2u l=200n ad=0.4p as=0.4p pd=4.4u ps=4.4u
+Cbp (vbp vdd) capacitor c=2p
+Mp1 (in vbp vdd vdd) pmos90 w=29.84u l=200n ad=5.968p as=5.968p pd=60.08u ps=60.08u
+M1 (in in 0 0) nmos90 w=5.591u l=100n ad=1.118p as=1.118p pd=11.58u ps=11.58u
+M2 (out in 0 0) nmos90 w=20.22u l=100n ad=4.044p as=4.044p pd=40.84u ps=40.84u
+Rf (out in) resistor r=19.217k
+Ma (out ga vdd vdd) pmos90 w=7.568u l=100n ad=1.514p as=1.514p pd=15.54u ps=15.54u
+Rg (ga out) resistor r=13.553k
+RL (vdd out) resistor r=101.51k
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin

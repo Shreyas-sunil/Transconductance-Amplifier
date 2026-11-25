@@ -1,0 +1,30 @@
+Version 4
+SymbolType CELL
+LINE Normal 48 0 48 24
+LINE Normal 48 24 24 24
+LINE Normal 24 16 24 80
+LINE Normal 24 72 48 72
+LINE Normal 48 72 48 96
+LINE Normal 16 24 16 72
+LINE Normal 0 48 8 48
+CIRCLE Normal 8 44 16 52
+LINE Normal 24 48 80 48
+LINE Normal 32 44 48 48
+LINE Normal 32 52 48 48
+WINDOW 0 56 16 Left 2
+WINDOW 3 56 80 Left 2
+SYMATTR Value pmos90
+SYMATTR Prefix MP
+SYMATTR Description 4-terminal PMOS (S top, D bottom, G left, B right)
+PIN 48 96 NONE 0
+PINATTR PinName D
+PINATTR SpiceOrder 1
+PIN 0 48 NONE 0
+PINATTR PinName G
+PINATTR SpiceOrder 2
+PIN 48 0 NONE 0
+PINATTR PinName S
+PINATTR SpiceOrder 3
+PIN 80 48 NONE 0
+PINATTR PinName B
+PINATTR SpiceOrder 4

@@ -1,0 +1,36 @@
+* RGC with PMOS current-mirror output (no negative-RC path)
+* Run: ngspice -b var_cmrgc_robust.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=17.06u L=200n AD=3.413p AS=3.413p PD=34.53u PS=34.53u
+M1 d1 x in 0 nmos90 W=27.2u L=100n AD=5.44p AS=5.44p PD=54.8u PS=54.8u
+M2 x in 0 0 nmos90 W=20.18u L=100n AD=4.035p AS=4.035p PD=40.75u PS=40.75u
+R2 vdd x 1.4867k
+Mp1 d1 d1 vdd vdd pmos90 W=37.34u L=100n AD=7.468p AS=7.468p PD=75.08u PS=75.08u
+Mp2 out d1 vdd vdd pmos90 W=38.84u L=100n AD=7.769p AS=7.769p PD=78.09u PS=78.09u
+RL out 0 285.06
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata var_cmrgc_robust_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata var_cmrgc_robust_noise.txt inoise_spectrum
+.endc
+.end

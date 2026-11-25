@@ -1,0 +1,29 @@
+// Abdollahi 2025 MDFRGC re-sized for the nominal corner only (higher gain, corner-sensitive)
+// Run:  spectre base_mdfrgc_nominal.scs
+simulator lang=spectre
+global 0
+// gpdk090: set the path to your kit. Sections: NN FF SS FS SF
+include "/path/to/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos1v w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos1v w=7.995u l=200n ad=1.599p as=1.599p pd=16.39u ps=16.39u
+M1 (out x in 0) nmos1v w=6.663u l=100n ad=1.333p as=1.333p pd=13.73u ps=13.73u
+R1 (vdd out) resistor r=2.4582k
+M2 (x in 0 0) nmos1v w=30.35u l=100n ad=6.071p as=6.071p pd=61.11u ps=61.11u
+R2 (vdd x) resistor r=830.97
+M3 (x out s3 0) nmos1v w=4.743u l=100n ad=0.9485p as=0.9485p pd=9.885u ps=9.885u
+R3 (s3 0) resistor r=2.3197k
+C3 (s3 0) capacitor c=90.269f
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin
+// corners x temperature (uncomment):
+// alter / altergroup in ADE Explorer/Assembler is easier: corners NN SS FF FS SF, temp -40 35 125, VDD 0.9 1.0 1.1

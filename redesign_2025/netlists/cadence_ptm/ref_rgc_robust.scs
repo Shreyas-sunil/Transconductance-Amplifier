@@ -1,0 +1,23 @@
+// Conventional regulated-cascode TIA (Park-Yoo style), worst-case sized
+// Run:  spectre ref_rgc_robust.scs
+simulator lang=spectre
+global 0
+include "ptm90.lib"   // SPICE-syntax PTM card (Spectre reads it as SPICE)
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos90 w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos90 w=23.9u l=200n ad=4.779p as=4.779p pd=48.19u ps=48.19u
+M1 (out x in 0) nmos90 w=20.83u l=100n ad=4.166p as=4.166p pd=42.06u ps=42.06u
+R1 (vdd out) resistor r=635.71
+M2 (x in 0 0) nmos90 w=40u l=100n ad=8p as=8p pd=80.4u ps=80.4u
+R2 (vdd x) resistor r=811.42
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin

@@ -1,0 +1,31 @@
+// RGC with PMOS current-mirror output and a negative-RC path from the mirror node
+// Run:  spectre var_cmnrc_robust.scs
+simulator lang=spectre
+global 0
+// gpdk090: set the path to your kit. Sections: NN FF SS FS SF
+include "/path/to/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos1v w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos1v w=15.83u l=200n ad=3.165p as=3.165p pd=32.05u ps=32.05u
+M1 (d1 x in 0) nmos1v w=17.7u l=100n ad=3.54p as=3.54p pd=35.8u ps=35.8u
+M2 (x in 0 0) nmos1v w=36.29u l=100n ad=7.257p as=7.257p pd=72.97u ps=72.97u
+R2 (vdd x) resistor r=1.6903k
+Mp1 (d1 d1 vdd vdd) pmos1v w=29.72u l=100n ad=5.944p as=5.944p pd=59.84u ps=59.84u
+Mp2 (out d1 vdd vdd) pmos1v w=35.51u l=100n ad=7.103p as=7.103p pd=71.43u ps=71.43u
+RL (out 0) resistor r=550.8
+M3 (x d1 s3 0) nmos1v w=2.632u l=100n ad=0.5264p as=0.5264p pd=5.664u ps=5.664u
+R3 (s3 0) resistor r=1.5322k
+C3 (s3 0) capacitor c=28.679f
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin
+// corners x temperature (uncomment):
+// alter / altergroup in ADE Explorer/Assembler is easier: corners NN SS FF FS SF, temp -40 35 125, VDD 0.9 1.0 1.1

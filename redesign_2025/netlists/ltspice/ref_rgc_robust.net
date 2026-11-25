@@ -1,0 +1,29 @@
+* Conventional regulated-cascode TIA (Park-Yoo style), worst-case sized
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=23.9u L=200n AD=4.779p AS=4.779p PD=48.19u PS=48.19u
+M1 out x in 0 nmos90 W=20.83u L=100n AD=4.166p AS=4.166p PD=42.06u PS=42.06u
+R1 vdd out 635.71
+M2 x in 0 0 nmos90 W=40u L=100n AD=8p AS=8p PD=80.4u PS=80.4u
+R2 vdd x 811.42
+
+.ac dec 40 1Meg 100G
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

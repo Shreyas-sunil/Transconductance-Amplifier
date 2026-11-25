@@ -1,0 +1,26 @@
+// Abdollahi 2025 modified dual-feedback RGC with negative-RC network, re-sized for 1 V / PTM90 against 7 PVT conditions
+// Run:  spectre base_mdfrgc_robust.scs
+simulator lang=spectre
+global 0
+include "ptm90.lib"   // SPICE-syntax PTM card (Spectre reads it as SPICE)
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos90 w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos90 w=23.76u l=200n ad=4.752p as=4.752p pd=47.92u ps=47.92u
+M1 (out x in 0) nmos90 w=20.14u l=100n ad=4.028p as=4.028p pd=40.68u ps=40.68u
+R1 (vdd out) resistor r=692.88
+M2 (x in 0 0) nmos90 w=23.23u l=100n ad=4.645p as=4.645p pd=46.85u ps=46.85u
+R2 (vdd x) resistor r=635.92
+M3 (x out s3 0) nmos90 w=3.273u l=100n ad=0.6546p as=0.6546p pd=6.946u ps=6.946u
+R3 (s3 0) resistor r=5.9811k
+C3 (s3 0) capacitor c=31.248f
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin

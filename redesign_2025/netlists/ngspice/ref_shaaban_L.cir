@@ -1,0 +1,35 @@
+* Current-mirror TIA, shunt feedback, passive shunt-peaking inductor - reconstruction
+* Run: ngspice -b ref_shaaban_L.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibp vbp 0 dc 20u
+Mdp vbp vbp vdd vdd pmos90 W=2u L=200n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Cbp vbp vdd 2p
+Mp1 in vbp vdd vdd pmos90 W=4.169u L=200n AD=0.8339p AS=0.8339p PD=8.739u PS=8.739u
+M1 in in 0 0 nmos90 W=2.395u L=100n AD=0.479p AS=0.479p PD=5.19u PS=5.19u
+M2 out in 0 0 nmos90 W=24.53u L=100n AD=4.907p AS=4.907p PD=49.47u PS=49.47u
+Rf out in 9.011k
+RL vdd lx 89.223
+Lp lx out 17.843n
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata ref_shaaban_L_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata ref_shaaban_L_noise.txt inoise_spectrum
+.endc
+.end

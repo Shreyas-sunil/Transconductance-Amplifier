@@ -1,0 +1,34 @@
+* Same, sized for the nominal corner only
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=4.696u L=200n AD=0.9393p AS=0.9393p PD=9.793u PS=9.793u
+M1 d1 x in 0 nmos90 W=3.466u L=100n AD=0.6932p AS=0.6932p PD=7.332u PS=7.332u
+M2 x in 0 0 nmos90 W=13.91u L=100n AD=2.782p AS=2.782p PD=28.22u PS=28.22u
+R2 vdd x 773.68
+Mp1 d1 d1 vdd vdd pmos90 W=2.981u L=100n AD=0.5962p AS=0.5962p PD=6.362u PS=6.362u
+Mp2 out d1 vdd vdd pmos90 W=12.66u L=100n AD=2.532p AS=2.532p PD=25.72u PS=25.72u
+RL out 0 1.8007k
+M3 x d1 s3 0 nmos90 W=3.391u L=100n AD=0.6783p AS=0.6783p PD=7.183u PS=7.183u
+R3 s3 0 618.23
+C3 s3 0 214.36f
+
+.ac dec 40 1Meg 100G
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

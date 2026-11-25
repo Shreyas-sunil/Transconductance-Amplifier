@@ -1,0 +1,37 @@
+* Abdollahi 2025 modified dual-feedback RGC with negative-RC network, re-sized for 1 V / PTM90 against 7 PVT conditions
+* Run: ngspice -b base_mdfrgc_robust.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=23.76u L=200n AD=4.752p AS=4.752p PD=47.92u PS=47.92u
+M1 out x in 0 nmos90 W=20.14u L=100n AD=4.028p AS=4.028p PD=40.68u PS=40.68u
+R1 vdd out 692.88
+M2 x in 0 0 nmos90 W=23.23u L=100n AD=4.645p AS=4.645p PD=46.85u PS=46.85u
+R2 vdd x 635.92
+M3 x out s3 0 nmos90 W=3.273u L=100n AD=0.6546p AS=0.6546p PD=6.946u PS=6.946u
+R3 s3 0 5.9811k
+C3 s3 0 31.248f
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata base_mdfrgc_robust_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata base_mdfrgc_robust_noise.txt inoise_spectrum
+.endc
+.end

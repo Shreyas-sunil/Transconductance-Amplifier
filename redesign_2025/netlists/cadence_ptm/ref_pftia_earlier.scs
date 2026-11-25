@@ -1,0 +1,25 @@
+// PF-TIA re-sized under the same rules
+// Run:  spectre ref_pftia_earlier.scs
+simulator lang=spectre
+global 0
+include "ptm90.lib"   // SPICE-syntax PTM card (Spectre reads it as SPICE)
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibp (vbp 0) isource dc=20u type=dc
+Mdp (vbp vbp vdd vdd) pmos90 w=2u l=200n ad=0.4p as=0.4p pd=4.4u ps=4.4u
+Cbp (vbp vdd) capacitor c=2p
+Vb1 (vb1 0) vsource dc=543.61m type=dc
+Rn (vdd n) resistor r=7.2148k
+M1 (n vb1 in 0) nmos90 w=3.618u l=100n ad=0.7236p as=0.7236p pd=7.636u ps=7.636u
+M2 (in n 0 0) nmos90 w=2.682u l=100n ad=0.5363p as=0.5363p pd=5.763u ps=5.763u
+M3 (out n 0 0) nmos90 w=5.352u l=100n ad=1.07p as=1.07p pd=11.1u ps=11.1u
+M3b (out vbp vdd vdd) pmos90 w=27.28u l=200n ad=5.456p as=5.456p pd=54.96u ps=54.96u
+Mf (vdd out in 0) nmos90 w=1.268u l=100n ad=0.2536p as=0.2536p pd=2.936u ps=2.936u
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin

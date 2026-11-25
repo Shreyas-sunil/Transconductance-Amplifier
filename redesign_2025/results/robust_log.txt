@@ -1,0 +1,9 @@
+cm_nrc_d1_P1.5_F2.5_robust Zt=55.53 dBohm  pk=0.68 dB  f3=3.086 GHz  P=1.033 mW  in_avg=19.67 pA/rtHz  Vin=0.250 Vout=0.282 sat 0.146 GBW 1.845 THz-ohm
+{'wb': np.float64(15.827194488166398), 'w1': np.float64(17.701023490828753), 'w2': np.float64(36.28731108866739), 'r2': np.float64(1690.3066293607071), 'wp1': np.float64(29.718194345513982), 'k': np.float64(1.1949954876241766), 'rl': np.float64(550.7952566808864), 'w3': np.float64(2.6322261920768315), 'r3': np.float64(1532.228642941545), 'c3': np.float64(2.867937531346993e-14)}
+mdfrgc_P1.5_F2.5_robust Zt=56.79 dBohm  pk=0.00 dB  f3=3.983 GHz  P=0.830 mW  in_avg=18.18 pA/rtHz  Vin=0.325 Vout=0.674 sat 0.221 GBW 2.752 THz-ohm
+{'wb': np.float64(23.759565379370752), 'w1': np.float64(20.138386131657118), 'w2': np.float64(23.227413086435885), 'r1': np.float64(692.8773678753141), 'r2': np.float64(635.9221037384161), 'w3': np.float64(3.2730910628992858), 'r3': np.float64(5981.06389032538), 'c3': np.float64(3.124790669808837e-14)}
+cm_rgc_P1.5_F2.5_robust Zt=50.35 dBohm  pk=0.00 dB  f3=3.792 GHz  P=1.099 mW  in_avg=20.97 pA/rtHz  Vin=0.310 Vout=0.160 sat 0.206 GBW 1.249 THz-ohm
+{'wb': np.float64(17.063115148692283), 'w1': np.float64(27.2024334010398), 'w2': np.float64(20.1750429980953), 'r2': np.float64(1486.711125081608), 'wp1': np.float64(37.34071913919816), 'k': np.float64(1.0402309209309872), 'rl': np.float64(285.05818527587957)}
+rgc_P1.5_F2.5_robust Zt=56.04 dBohm  pk=0.00 dB  f3=3.519 GHz  P=0.800 mW  in_avg=16.25 pA/rtHz  Vin=0.301 Vout=0.701 sat 0.197 GBW 2.23 THz-ohm
+{'wb': np.float64(23.895600462469215), 'w1': np.float64(20.828099257640915), 'w2': np.float64(39.99895423093195), 'r1': np.float64(635.7113758457248), 'r2': np.float64(811.4222596183713)}
+DONE

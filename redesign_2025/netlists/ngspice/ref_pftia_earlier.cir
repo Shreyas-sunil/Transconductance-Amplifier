@@ -1,0 +1,36 @@
+* PF-TIA re-sized under the same rules
+* Run: ngspice -b ref_pftia_earlier.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibp vbp 0 dc 20u
+Mdp vbp vbp vdd vdd pmos90 W=2u L=200n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Cbp vbp vdd 2p
+Vb1 vb1 0 dc 543.61m
+Rn vdd n 7.2148k
+M1 n vb1 in 0 nmos90 W=3.618u L=100n AD=0.7236p AS=0.7236p PD=7.636u PS=7.636u
+M2 in n 0 0 nmos90 W=2.682u L=100n AD=0.5363p AS=0.5363p PD=5.763u PS=5.763u
+M3 out n 0 0 nmos90 W=5.352u L=100n AD=1.07p AS=1.07p PD=11.1u PS=11.1u
+M3b out vbp vdd vdd pmos90 W=27.28u L=200n AD=5.456p AS=5.456p PD=54.96u PS=54.96u
+Mf vdd out in 0 nmos90 W=1.268u L=100n AD=0.2536p AS=0.2536p PD=2.936u PS=2.936u
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata ref_pftia_earlier_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata ref_pftia_earlier_noise.txt inoise_spectrum
+.endc
+.end

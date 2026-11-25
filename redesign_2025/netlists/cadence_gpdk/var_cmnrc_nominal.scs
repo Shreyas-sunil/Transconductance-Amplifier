@@ -1,0 +1,31 @@
+// Same, sized for the nominal corner only
+// Run:  spectre var_cmnrc_nominal.scs
+simulator lang=spectre
+global 0
+// gpdk090: set the path to your kit. Sections: NN FF SS FS SF
+include "/path/to/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos1v w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos1v w=4.696u l=200n ad=0.9393p as=0.9393p pd=9.793u ps=9.793u
+M1 (d1 x in 0) nmos1v w=3.466u l=100n ad=0.6932p as=0.6932p pd=7.332u ps=7.332u
+M2 (x in 0 0) nmos1v w=13.91u l=100n ad=2.782p as=2.782p pd=28.22u ps=28.22u
+R2 (vdd x) resistor r=773.68
+Mp1 (d1 d1 vdd vdd) pmos1v w=2.981u l=100n ad=0.5962p as=0.5962p pd=6.362u ps=6.362u
+Mp2 (out d1 vdd vdd) pmos1v w=12.66u l=100n ad=2.532p as=2.532p pd=25.72u ps=25.72u
+RL (out 0) resistor r=1.8007k
+M3 (x d1 s3 0) nmos1v w=3.391u l=100n ad=0.6783p as=0.6783p pd=7.183u ps=7.183u
+R3 (s3 0) resistor r=618.23
+C3 (s3 0) capacitor c=214.36f
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin
+// corners x temperature (uncomment):
+// alter / altergroup in ADE Explorer/Assembler is easier: corners NN SS FF FS SF, temp -40 35 125, VDD 0.9 1.0 1.1

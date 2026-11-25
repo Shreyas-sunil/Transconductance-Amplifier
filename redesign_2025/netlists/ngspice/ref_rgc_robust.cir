@@ -1,0 +1,34 @@
+* Conventional regulated-cascode TIA (Park-Yoo style), worst-case sized
+* Run: ngspice -b ref_rgc_robust.cir   (PTM 90 nm BSIM4, VDD = 1 V)
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=23.9u L=200n AD=4.779p AS=4.779p PD=48.19u PS=48.19u
+M1 out x in 0 nmos90 W=20.83u L=100n AD=4.166p AS=4.166p PD=42.06u PS=42.06u
+R1 vdd out 635.71
+M2 x in 0 0 nmos90 W=40u L=100n AD=8p AS=8p PD=80.4u PS=80.4u
+R2 vdd x 811.42
+
+.control
+set noaskquit
+op
+print i(vdd) v(in) v(out)
+ac dec 40 1Meg 100G
+let zt = vdb(out)
+meas ac zt0 find zt at=10meg
+meas ac zpk max zt
+let zm3 = zt0 - 3
+meas ac f3db when zt=zm3 fall=1
+wrdata ref_rgc_robust_ac.txt vdb(out) vp(out)
+noise v(out) iin dec 40 1Meg 100G
+setplot noise1
+wrdata ref_rgc_robust_noise.txt inoise_spectrum
+.endc
+.end

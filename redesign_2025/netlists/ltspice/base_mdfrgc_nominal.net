@@ -1,0 +1,32 @@
+* Abdollahi 2025 MDFRGC re-sized for the nominal corner only (higher gain, corner-sensitive)
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=7.995u L=200n AD=1.599p AS=1.599p PD=16.39u PS=16.39u
+M1 out x in 0 nmos90 W=6.663u L=100n AD=1.333p AS=1.333p PD=13.73u PS=13.73u
+R1 vdd out 2.4582k
+M2 x in 0 0 nmos90 W=30.35u L=100n AD=6.071p AS=6.071p PD=61.11u PS=61.11u
+R2 vdd x 830.97
+M3 x out s3 0 nmos90 W=4.743u L=100n AD=0.9485p AS=0.9485p PD=9.885u PS=9.885u
+R3 s3 0 2.3197k
+C3 s3 0 90.269f
+
+.ac dec 40 1Meg 100G
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

@@ -1,0 +1,36 @@
+* Base-paper MDFRGC with the A2 degeneration resistor shunted by a triode NMOS (control voltage vc)
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibn vdd vbn dc 20u
+Mdn vbn vbn 0 0 nmos90 W=1u L=200n AD=0.2p AS=0.2p PD=2.4u PS=2.4u
+Cbn vbn 0 2p
+Mb in vbn 0 0 nmos90 W=9.662u L=200n AD=1.932p AS=1.932p PD=19.72u PS=19.72u
+M1 out x in 0 nmos90 W=6.669u L=100n AD=1.334p AS=1.334p PD=13.74u PS=13.74u
+R1 vdd out 2.4022k
+M2 x in 0 0 nmos90 W=15.01u L=100n AD=3.002p AS=3.002p PD=30.42u PS=30.42u
+R2 vdd x 578.84
+M3 x out s3 0 nmos90 W=9.747u L=100n AD=1.949p AS=1.949p PD=19.89u PS=19.89u
+R3 s3 0 1.1335k
+C3 s3 0 92.429f
+Mr3 s3 vc 0 0 nmos90 W=1.068u L=100n AD=0.2135p AS=0.2135p PD=2.535u PS=2.535u
+.param vcv=0.3029
+Vc vc 0 dc {vcv}
+
+.ac dec 40 1Meg 100G
+;.step param vcv 0 1 0.05   ; trimming sweep: bandwidth/peaking vs control voltage
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end

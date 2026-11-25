@@ -1,0 +1,36 @@
+// Base-paper MDFRGC with the A2 degeneration resistor shunted by a triode NMOS (control voltage vc)
+// Run:  spectre prop_mdfrgc_trim.scs
+simulator lang=spectre
+global 0
+// gpdk090: set the path to your kit. Sections: NN FF SS FS SF
+include "/path/to/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+
+parameters vcv=0.3029
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibn (vdd vbn) isource dc=20u type=dc
+Mdn (vbn vbn 0 0) nmos1v w=1u l=200n ad=0.2p as=0.2p pd=2.4u ps=2.4u
+Cbn (vbn 0) capacitor c=2p
+Mb (in vbn 0 0) nmos1v w=9.662u l=200n ad=1.932p as=1.932p pd=19.72u ps=19.72u
+M1 (out x in 0) nmos1v w=6.669u l=100n ad=1.334p as=1.334p pd=13.74u ps=13.74u
+R1 (vdd out) resistor r=2.4022k
+M2 (x in 0 0) nmos1v w=15.01u l=100n ad=3.002p as=3.002p pd=30.42u ps=30.42u
+R2 (vdd x) resistor r=578.84
+M3 (x out s3 0) nmos1v w=9.747u l=100n ad=1.949p as=1.949p pd=19.89u ps=19.89u
+R3 (s3 0) resistor r=1.1335k
+C3 (s3 0) capacitor c=92.429f
+Mr3 (s3 vc 0 0) nmos1v w=1.068u l=100n ad=0.2135p as=0.2135p pd=2.535u ps=2.535u
+Vc (vc 0) vsource dc=vcv type=dc
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin
+// corners x temperature (uncomment):
+// alter / altergroup in ADE Explorer/Assembler is easier: corners NN SS FF FS SF, temp -40 35 125, VDD 0.9 1.0 1.1
+// trimming sweep of the control voltage: bandwidth and peaking vs vc
+swVc sweep param=vcv start=0 stop=1 step=0.05 {
+    acVc ac start=1M stop=100G dec=40
+}

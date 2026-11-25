@@ -1,0 +1,27 @@
+// Current-mirror TIA with NMOS source-follower active inductor - reconstruction
+// Run:  spectre ref_shaaban_AN.scs
+simulator lang=spectre
+global 0
+// gpdk090: set the path to your kit. Sections: NN FF SS FS SF
+include "/path/to/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+
+Vdd (vdd 0) vsource dc=1 type=dc
+Cpd (in 0) capacitor c=450f
+CL (out 0) capacitor c=50f
+Iin (0 in) isource dc=0 type=dc mag=1
+Ibp (vbp 0) isource dc=20u type=dc
+Mdp (vbp vbp vdd vdd) pmos1v w=2u l=200n ad=0.4p as=0.4p pd=4.4u ps=4.4u
+Cbp (vbp vdd) capacitor c=2p
+Mp1 (in vbp vdd vdd) pmos1v w=37.58u l=200n ad=7.516p as=7.516p pd=75.56u ps=75.56u
+M1 (in in 0 0) nmos1v w=7.45u l=100n ad=1.49p as=1.49p pd=15.3u ps=15.3u
+M2 (out in 0 0) nmos1v w=23.22u l=100n ad=4.643p as=4.643p pd=46.83u ps=46.83u
+Rf (out in) resistor r=8.4054k
+Ma (vdd ga out 0) nmos1v w=2.032u l=100n ad=0.4064p as=0.4064p pd=4.464u ps=4.464u
+Rg (vdd ga) resistor r=53.21k
+
+simOpts options temp=35 tnom=27 reltol=1e-4 save=allpub
+dcOp dc oppoint=logfile
+acZt ac start=1M stop=100G dec=40
+noiseIn (out 0) noise start=1M stop=100G dec=40 iprobe=Iin
+// corners x temperature (uncomment):
+// alter / altergroup in ADE Explorer/Assembler is easier: corners NN SS FF FS SF, temp -40 35 125, VDD 0.9 1.0 1.1

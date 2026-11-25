@@ -1,0 +1,31 @@
+* Current-mirror TIA with PMOS gate-resistor active inductor - reconstruction
+* LTspice: File > Open (All files) > this .net > Run.  Keep ptm90.lib in this folder.
+* One analysis at a time: un-comment the one you want with ";" removed.
+.include ptm90.lib
+.temp 35
+
+Vdd vdd 0 dc 1
+Cpd in 0 450f
+CL out 0 50f
+Iin 0 in dc 0 ac 1
+Ibp vbp 0 dc 20u
+Mdp vbp vbp vdd vdd pmos90 W=2u L=200n AD=0.4p AS=0.4p PD=4.4u PS=4.4u
+Cbp vbp vdd 2p
+Mp1 in vbp vdd vdd pmos90 W=29.84u L=200n AD=5.968p AS=5.968p PD=60.08u PS=60.08u
+M1 in in 0 0 nmos90 W=5.591u L=100n AD=1.118p AS=1.118p PD=11.58u PS=11.58u
+M2 out in 0 0 nmos90 W=20.22u L=100n AD=4.044p AS=4.044p PD=40.84u PS=40.84u
+Rf out in 19.217k
+Ma out ga vdd vdd pmos90 W=7.568u L=100n AD=1.514p AS=1.514p PD=15.54u PS=15.54u
+Rg ga out 13.553k
+RL vdd out 101.51k
+
+.ac dec 40 1Meg 100G
+;.noise V(out) Iin dec 40 1Meg 100G
+;.op
+;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
+;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+.meas AC zt0 FIND mag(V(out)) AT 10Meg
+.meas AC zpk MAX mag(V(out))
+.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1
+.backanno
+.end
