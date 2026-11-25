@@ -1,0 +1,43 @@
+// C3_proposed_dynamic_qfg_W0p5 - testbench C_ac
+// Cadence Spectre, gpdk090 (nmos1v/pmos1v). Device sizes are the PTM90 design copied over;
+// re-tune bias/sizes in GPDK090 before quoting numbers (thresholds differ).
+simulator lang=spectre
+global 0
+include "/home/buet/cadence/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+Vdd (vdd 0) vsource dc=0.6
+// analog ground from R1-R2, also the bulk bias of MB1
+R1 (vdd ag) resistor r=300k
+R2 (ag 0) resistor r=300k
+Ib (vb1 0) isource dc=180n
+MB1 (vb1 vb1 vdd ag) pmos1v w=3u l=180n m=2
+// bulk-driven non-tailed input pair (PMOS, gates at VB1, bulks are the inputs)
+M1 (n1 vb1 vdd inp) pmos1v w=3u l=180n m=2
+M2 (n2 vb1 vdd inn) pmos1v w=3u l=180n m=2
+// NMOS diode loads + cross-coupled positive feedback (alpha = 5/6)
+M3 (n1 n1 0 0) nmos1v w=6u l=180n
+M5 (n2 n2 0 0) nmos1v w=6u l=180n
+M7 (n1 n2 0 0) nmos1v w=5u l=180n
+M8 (n2 n1 0 0) nmos1v w=5u l=180n
+// current gain beta and differential-to-single-ended mirror
+M4 (n3 n1 0 0) nmos1v w=6u l=180n m=15
+M6 (x n2 0 0) nmos1v w=6u l=180n m=15
+M9 (n3 n3 vdd vdd) pmos1v w=6u l=180n m=4
+M10 (x n3 vdd vdd) pmos1v w=6u l=180n m=4
+// class-AB second stage: M11 CS, M12 quasi-floating-gate load
+M11 (out x 0 0) nmos1v w=6u l=180n m=8
+Ib3 (g12b 0) isource dc=180n
+MB3 (g12b g12b vdd vdd) pmos1v w=6u l=180n
+Rbatt (g12b g12) resistor r=1M
+Cbatt (x g12) capacitor c=800f
+M12 (out g12 vdd vdd) pmos1v w=6u l=180n m=15
+// Miller compensation via current buffer node n1
+Cc (out cm1) capacitor c=500f
+Rc (cm1 n1) resistor r=100k
+Cl (out 0) capacitor c=150p
+Mpd (g12 n3 x 0) nmos1v w=0.5u l=0.18u
+Rf (out inn) resistor r=1G
+Cf (inn 0) capacitor c=10
+Vin (inp 0) vsource dc=0.3 mag=1
+simOpts options temp=27 tnom=27 reltol=1e-5 gmin=1e-15
+dcop dc
+olac ac start=0.1 stop=100M dec=40

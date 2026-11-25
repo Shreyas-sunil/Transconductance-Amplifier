@@ -1,0 +1,47 @@
+* C1_base_bulk_driven_classAB_reconstruction - testbench C_ac
+* PTM 90 nm BSIM4 (ptm90.lib). Run: ngspice -b <file>
+.include ptm90.lib
+Vdd vdd 0 0.6
+* analog ground from R1-R2, also the bulk bias of MB1
+R1 vdd ag 300k
+R2 ag 0 300k
+Ib vb1 0 180n
+MB1 vb1 vb1 vdd ag pmos90 W=3u L=180n m=2
+* bulk-driven non-tailed input pair (PMOS, gates at VB1, bulks are the inputs)
+M1 n1 vb1 vdd inp pmos90 W=3u L=180n m=2
+M2 n2 vb1 vdd inn pmos90 W=3u L=180n m=2
+* NMOS diode loads + cross-coupled positive feedback (alpha = 5/6)
+M3 n1 n1 0 0 nmos90 W=6u L=180n
+M5 n2 n2 0 0 nmos90 W=6u L=180n
+M7 n1 n2 0 0 nmos90 W=5u L=180n
+M8 n2 n1 0 0 nmos90 W=5u L=180n
+* current gain beta and differential-to-single-ended mirror
+M4 n3 n1 0 0 nmos90 W=6u L=180n m=15
+M6 x n2 0 0 nmos90 W=6u L=180n m=15
+M9 n3 n3 vdd vdd pmos90 W=6u L=180n m=4
+M10 x n3 vdd vdd pmos90 W=6u L=180n m=4
+* class-AB second stage: M11 CS, M12 quasi-floating-gate load
+M11 out x 0 0 nmos90 W=6u L=180n m=8
+Ib3 g12b 0 180n
+MB3 g12b g12b vdd vdd pmos90 W=6u L=180n
+Rbatt g12b g12 1Meg
+Cbatt x g12 800f
+M12 out g12 vdd vdd pmos90 W=6u L=180n m=15
+* Miller compensation via current buffer node n1
+Cc out cm1 500f
+Rc cm1 n1 100k
+Cl out 0 150p
+Rf out inn 1G
+Cf inn 0 10
+Vin inp 0 dc 0.3 ac 1
+.control
+op
+ac dec 40 0.1 100Meg
+let g=db(v(out))
+let ph=180*cph(v(out))/pi
+meas ac A0_dB find g at=1
+meas ac UGF when g=0
+meas ac PH_UGF find ph when g=0
+wrdata ac_out.txt g ph
+.endc
+.end

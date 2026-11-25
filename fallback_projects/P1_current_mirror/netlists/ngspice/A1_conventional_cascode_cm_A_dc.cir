@@ -1,0 +1,26 @@
+* A1_conventional_cascode_cm - testbench A_dc
+* PTM 90 nm BSIM4 (ptm90.lib). Run: ngspice -b <file>
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 dc 0.5 ac 0
+M1C y vcn x 0 nmos90 W=10u L=360n
+M1 x y 0 0 nmos90 W=10u L=360n
+M2C out vcn x2 0 nmos90 W=10u L=360n
+M2 x2 y 0 0 nmos90 W=10u L=360n
+Vjoin inn y 0
+Iin 0 inn dc 10u ac 1
+.control
+op
+dc Iin 0 20u 0.25u
+let iout=-i(Vo)
+let err_pct=100*(iout-v-sweep)/(v-sweep+1e-12)
+wrdata dc_out.txt iout err_pct v(inn)
+ac dec 40 1k 10G
+meas ac Rin_1k find mag(v(inn)) at=1k
+let tf=db(-i(Vo))
+meas ac BW when tf=-3.0103
+dc Vo 0 1 0.005
+wrdata vo_out.txt -i(Vo)
+.endc
+.end
