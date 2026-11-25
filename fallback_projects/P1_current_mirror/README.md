@@ -1,95 +1,120 @@
-# Project 1: Low-voltage high-accuracy FVF current mirror
+# Project 1: Dynamically matched, low-voltage FVF current mirror with sub-0.1 Ω input resistance
 
-**Status:** base paper reconstructed and re-simulated in PTM 90 nm (ngspice) at 1 V, one novelty variant simulated with
-corners, temperature and Monte Carlo. Schematic level only. Cadence gpdk090 and LTspice netlists are generated but were not
-run here.
+**Status (v2, 25 Nov 2026):** base paper reconstructed in PTM 90 nm (ngspice) at 1 V. The proposed mirror beats the
+reconstruction on every static metric, and cuts the random (mismatch) gain error from 6.2 % to 0.23 % (σ) with dynamic
+element matching (DEM). Checked over 5 corners × −40/27/125 °C and 40 Monte Carlo runs. Schematic level only; LTspice and
+Cadence gpdk090 netlists are generated but were not run here.
 
 ## 1. Base paper
 
 Ramírez-Angulo, Paul, Gangineni, Hinojo-Montero, Huerta-Chua, "Class AB Voltage Follower and Low-Voltage Current Mirror
 with Very High Figures of Merit Based on the Flipped Voltage Follower," *JLPEA* 13(2):28, 2023, doi:10.3390/jlpea13020028
-(open access). Full list in `papers/PAPERS.md`.
+(open access). Reported (180 nm, post-layout): Rin 0.212 Ω, Rout 112 GΩ, error < 0.01 %, Vin 0.15 V, compliance 0.2 V,
+BW 144 MHz. Full list in `papers/PAPERS.md`.
 
-Why this one: recent, open access, 1 V supply like your TIA work, and it reports record numbers (Rin 0.212 Ω,
-Rout 112 GΩ, error < 0.01 %) that a fallback paper can be compared against.
+**Caveat:** the paper's transistor figures were not readable from the cloud, so the base circuit (A3) is rebuilt from its
+text and equations (FVF mirror plus a common-source gain booster on each cascode gate). Check it against Fig. 4 of the
+PDF before writing anything.
 
-**Caveat on the reconstruction.** The paper's transistor-level figures are images and its size tables were not readable
-from the cloud. I rebuilt the mirror from its text and equations: FVF cascode mirror plus a gain-boosting amplifier on each
-cascode. The paper's boosters are folded-cascode amplifiers referenced to a level-shifted node (Vx = 0.15 V); mine are
-single common-source boosters (Vx ≈ 0.23 V). Download the PDF and check Fig. 4 before writing anything.
+## 2. The weakness the proposal attacks
 
-### The circuits (VDD = 1 V, Ib = 2 µA, mirror devices 10/0.36 µm, cascodes 40/0.36 µm)
+The base paper's "< 0.01 % error" is a **nominal** number. With realistic random mismatch (Avt = 3.5 mV·µm, mirror devices
+10/0.36 µm) the mirror has a **6.2 % σ gain error** (Monte Carlo, 40 runs). A current mirror is an accuracy circuit, so
+this is the number that matters, and the base paper does not report it. Fixing it by area alone would need roughly
+(6.2 / 0.23)² ≈ 700× larger mirror devices.
 
-- **A1 Conventional wide-swing cascode mirror.** Reference.
-- **A2 Plain FVF mirror.** Iin enters the source of the input cascode M1C, which closes an FVF loop; Ib is removed at the output.
-- **A3 Base reconstruction ("HP" mirror).** A2 plus a CS booster on each cascode gate (bias Ib/10, 0.3 pF compensation each).
-- **A4 Proposed: one differential booster.** The input FVF is left alone (it already gives a low input impedance). A single
-  PMOS-input differential booster compares the drain of the output mirror device with the drain of the input device and
-  drives the output cascode gate, so both mirror devices see the same VDS. No level shifter, one booster instead of two.
+## 3. The proposed mirror (A6)
 
-## 2. Re-simulation (PTM 90 nm, 27 °C, Iin = 10 µA unless noted)
+Two changes on top of the FVF core, with no extra bias current:
 
-| | Paper (180 nm, post-layout) | A1 Cascode | A2 Plain FVF | A3 Base reconstruction | **A4 Proposed** |
+1. **Dynamic element matching of the mirror pair.** The two mirror devices (MA, MB) share gate and source, so only their
+   drains need swapping. Four small NMOS switches (4/0.1 µm), placed under the cascodes, swap which device is the input
+   and which is the output every half clock period (500 kHz). The averaged output is then I·(1 + δ²/2) instead of
+   I·(1 + δ): the first-order mismatch term cancels. The switches sit at low-impedance nodes inside the cascodes, so they
+   barely touch Rin or Rout.
+2. **Enhanced FVF core (A5).** Cascoded common-source boosters (one extra transistor each, in series with the existing
+   booster bias, Vcb = 0.45 V), a wider booster device (8 µm) and narrower cascodes (10 µm). This lowers Rin and the input
+   voltage, and raises Rout and bandwidth.
+
+## 4. Results (PTM 90 nm, 1 V, Ib = 2 µA, Iin = 10 µA, 27 °C)
+
+| | Paper (180 nm) | A3 Base reconstruction | **A6 Proposed (DEM)** |
+|---|---|---|---|
+| Input resistance | 0.212 Ω | 0.54 Ω | **0.065 Ω** |
+| Systematic gain error | < 0.01 % | −0.007 % | −0.0035 % static, **+0.0002 % chopped** |
+| **Random gain error σ (Monte Carlo, 40 runs)** | not reported | 6.2 % | **0.23 %** (mean +0.12 %, worst 1.0 %) |
+| Random error σ at Iin = 2 µA | | | 0.31 % (11 % without DEM) |
+| Input voltage | 0.15 V | 0.231 V | **0.175 V** |
+| Output compliance (1 %) | 0.2 V | 0.215 V | **0.165 V** |
+| Output resistance at 0.5 V | 112 GΩ | 7.0 GΩ | **19 GΩ** |
+| Output resistance, gate tunnelling off | | 38 GΩ | **812 GΩ** |
+| −3 dB bandwidth | 144 MHz | 340 MHz (299 MHz with switches) | **409 MHz** |
+| Step 1→20 µA overshoot | | 46.5 % | **6.6 %** |
+| Static power | | 4.4 µW | 4.4 µW (+ clock, about 20 nW) |
+
+**Over PVT** (5 corners × 3 temperatures): chopped error stays within −0.008 … +0.002 %, Rin 0.049–0.095 Ω (base
+0.45–0.67 Ω). The worst corner (fast, 125 °C) still gives 2.5 GΩ and −0.016 % static error.
+
+**Over the input range** (1–20 µA, nominal) the chopped error stays within ±0.003 %.
+
+**Clock frequency:** charge injection keeps the error under 0.011 % up to 2 MHz; at 5 MHz it reaches −0.09 %. 500 kHz is
+the chosen point.
+
+**On Rout vs the paper's 112 GΩ:** PTM 90 nm includes gate tunnelling, which leaks current from the output cascode gate
+into the output and caps Rout near 20–35 GΩ. With tunnelling switched off (`ptm90_nogl.lib`, closer to the thick oxide of
+180 nm) the proposed mirror reaches 812 GΩ. That makes Rout a technology limit, not a topology one. Say so in the paper,
+and report both numbers.
+
+### Costs and limits to state in the paper
+- **Output ripple.** Each clock edge makes a short glitch (about 7 ns) on the output. With mismatch, the output also has a
+  square-wave part at the clock frequency of ±δ·I. The averaged current is accurate, so the load must average (a bias
+  line with a capacitor, a DAC, an integrator). The paper should show the glitch energy and ripple spectrum.
+- The DEM residual is second order (δ²/2), so it is always slightly positive. Its mean (0.12 %) could be removed by a
+  four-phase scheme that also swaps the Ib sources. That is a natural follow-up.
+- Rout drops to 2–3 GΩ near the ends of the output range (0.3 V and 0.8 V), again from gate tunnelling. The base drops to
+  0.4–0.9 GΩ there.
+- The Ib sources are ideal in both circuits, as in the base paper's measurement. In silicon they are PMOS mirrors, and
+  their mismatch should be swapped too (four more switches).
+
+## 5. Ablation (what each change buys, nominal)
+
+| | Rin | Rout (0.5 V) | Vin | Compliance | Random error σ |
 |---|---|---|---|---|---|
-| Input resistance (1 kHz) | 0.212 Ω | 5.49 kΩ | 24.9 Ω | **0.54 Ω** | 24.9 Ω |
-| Gain error at 10 µA | < 0.01 % | +0.145 % | −2.18 % | **−0.007 %** | −0.090 % |
-| Worst error, 1–20 µA | | 0.33 % | 4.43 % | 0.009 % | 0.13 % |
-| Input voltage at 20 µA | 0.15 V | 0.387 V | 0.176 V | 0.231 V | **0.176 V** |
-| Output resistance | 112 GΩ | 12 MΩ | 48 MΩ | **7.0 GΩ** | 2.2 GΩ |
-| Output compliance (1 %) | 0.2 V | 0.14 V | 0.135 V | 0.215 V | **0.145 V** |
-| −3 dB bandwidth | 144 MHz | 635 MHz | 348 MHz | 340 MHz | 351 MHz |
-| Static power (Iin = 0) | +25 % vs conventional | 0 | 4.0 µW | 4.4 µW | 4.2 µW |
+| A3 base reconstruction | 0.54 Ω | 7.0 GΩ | 0.231 V | 0.215 V | 6.2 % |
+| A3 + DEM | 0.54 Ω | 7.0 GΩ | 0.231 V | 0.215 V | 0.21 % |
+| A5 enhanced core, no DEM | 0.065 Ω | 19 GΩ | 0.175 V | 0.165 V | 5.4 % |
+| **A6 = A5 + DEM** | **0.065 Ω** | **19 GΩ** | **0.175 V** | **0.165 V** | **0.23 %** |
 
-The reconstruction reproduces the base paper's character: sub-ohm input resistance, 0.01 % systematic accuracy, GΩ output
-resistance and a constant input voltage. Rout is lower than 112 GΩ because my boosters have one gain stage, not two.
+DEM gives the accuracy. The cascoded booster core gives the Rin, Vin, compliance and bandwidth gains.
 
-**The proposed A4 is a trade-off, not a win:** it saves 55 mV of input headroom and 70 mV of output compliance with one
-booster fewer, but input resistance is 46× higher, output resistance 3× lower and accuracy 10× worse than A3.
+## 6. Novelty and prior-art check
 
-### Robustness (5 corners × −40/27/125 °C; 40 Monte Carlo runs, Avt = 3.5 mV·µm)
+Dynamic element matching itself is old (Van de Plassche, 1976, for DACs), and the FVF mirrors (level-shifted 2016,
+gain-boosted 2019, bulk-driven QFG 2020, this 2023 base) are all published. **None of the FVF high-accuracy mirror papers
+found reports Monte Carlo accuracy or uses DEM.** The pitch: "the first sub-0.1 Ω FVF mirror whose accuracy holds under
+mismatch". Before writing, search IEEE Xplore for "dynamic element matching" with "flipped voltage follower", and for
+"chopped current mirror", to confirm.
 
-| | A1 | A2 | A3 | A4 |
-|---|---|---|---|---|
-| Error at 10 µA, PVT range | 0.05 – 0.34 % | −4.5 – −1.3 % | −0.018 – −0.005 % | −0.31 – −0.05 % |
-| Error at 10 µA, Monte Carlo σ | 4.8 % | 6.2 % | 6.2 % | 7.3 % |
-| Rin, PVT range | 4.1 – 11.7 kΩ | 12 – 602 Ω | 0.45 – 0.67 Ω | 12 – 602 Ω |
+## 7. Publishability
 
-Two findings matter for any paper here:
-1. **Random mismatch dominates accuracy.** With these device areas, every topology has a 5–7 % σ gain error. The base
-   paper's "0.01 %" is a systematic (nominal) number. A fair paper must report both, and size the mirror pair for the
-   accuracy it claims.
-2. The plain FVF input (A2, A4) loses its loop at the fast/125 °C corner (Rin rises to 602 Ω). The bias needs to track.
+**Moderate to good** now. There is one clear headline (random error 6.2 % → 0.23 % at the same area and power), a strong
+supporting set (3× lower Rin than the paper, lower Vin and compliance, 2.8× the bandwidth) and an honest Rout discussion.
+For a Q2 journal (*AEÜ*, *Integration*, *Microelectronics Journal*, *IJCTA*) it needs layout and post-layout in gpdk090, a
+ripple/glitch spectrum, and ideally the four-phase or Ib-swapped version. *JLPEA* and *Electronics* (MDPI), where the base
+paper appeared, are realistic once the gpdk090 check is done.
 
-## 3. Novelty and prior-art check
-
-Level-shifted FVF mirrors (2016), gain-boosted FVF mirrors (2019), bulk-driven QFG FVF mirrors (2020), the base paper's
-two-booster version (2023) and a class AB FVF mirror/precision rectifier from the same group (2023) are all published.
-The base paper's own future work (class AB version, double-cascoded auxiliaries) is the obvious next step, so expect
-competition there.
-
-Ideas that are still open and that the reconstruction can support:
-- **Mismatch-aware high-accuracy mirror:** a chopped or dynamically matched FVF mirror that attacks the 5–7 % random error,
-  which none of these papers address. This is the strongest angle.
-- **Class AB bidirectional version with boosting**, if the 2023 precision-rectifier paper does not already cover it
-  (read it first).
-
-## 4. Publishability
-
-Low as it stands. The A4 variant does not dominate the base, and a pure current-mirror paper needs one clear figure of
-merit win. Worth pursuing only with the mismatch angle above, plus layout in gpdk090. Typical venues: *Analog Integrated
-Circuits and Signal Processing*, *Int. J. Electronics*, *Integration*, *Microelectronics Journal* (check quartiles on SJR).
-
-## 5. Files
+## 8. Files
 
 | Path | What it is |
 |---|---|
-| `netlists/ngspice/` | A1–A4 with testbench `_A_dc` (DC transfer, AC input resistance and bandwidth, output sweep), plus `ptm90.lib`. |
-| `netlists/ltspice/` | Same for LTspice (`.dc` by default; the `.ac` and output-sweep lines are given as comments). Change `level = 54` to `level = 14` in `ptm90.lib` if LTspice rejects it. |
-| `netlists/cadence_gpdk090/` | Spectre netlists (`nmos1v`/`pmos1v`, `section=NN`). PTM sizes copied over: retune Vcn and booster sizes in GPDK090. |
-| `scripts/` | `projA.py` (circuits and measurements), `runA.py` (corners and Monte Carlo), helper modules. |
-| `results/plots/A_mirror_characteristics.png` | Gain error, input voltage, input impedance vs frequency, output characteristic. |
-| `results/data/` | DC, input-impedance and output-sweep CSVs; `pvt_mc_results.json`; `pvt_mc_table.csv`. |
+| `netlists/ngspice/` | A1–A4 (v1) plus **A5** (enhanced core), **A6** (DEM mirror: `_A_dc` held in phase 1, `_A_chop` chopped transient) and the base with DEM. `ptm90.lib` included. Run `ngspice -b <file>`. |
+| `netlists/ltspice/` | Same for LTspice. Change `level = 54` to `level = 14` in `ptm90.lib` if LTspice rejects it. |
+| `netlists/cadence_gpdk090/` | Spectre netlists (`nmos1v`/`pmos1v`, `section=NN`). PTM sizes copied over: retune Vcn, Vcb and booster sizes in GPDK090. |
+| `scripts/` | v2: `projA2.py` (base and proposed cores, DEM, all measurements), `runA3.py` (corners, Monte Carlo, Iin and clock sweeps), `plots2.py`, `ptm90_nogl.lib` (gate tunnelling off). v1 scripts are kept. |
+| `results/plots/A_dem_mirror.png` | Monte Carlo histograms (static vs DEM), chopped output waveform, error vs Iin, error vs clock frequency. |
+| `results/plots/A_mirror_characteristics.png` | v1 plot (A1–A4). |
+| `results/data/` | `pvt_mc_results_v2_dem.json` and `pvt_mc_table_v2_dem.csv` (v2), plus the v1 CSVs and JSON. |
 | `papers/PAPERS.md` | Base and supporting papers with DOIs and open-access links. |
+| `COMPARISON.md` | The three projects side by side. |
 
-Note: the output-side Ib subtraction uses an ideal current source, so output resistance is that of the NMOS mirror alone,
-as in the base paper's measurement.
+The earlier single-booster variant (A4, v1) was a trade-off and is kept only for reference.

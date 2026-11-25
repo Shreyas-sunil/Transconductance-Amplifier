@@ -74,3 +74,15 @@ wrdata tr_out.txt v(out) v(inp)
 .endc""",
  lt=".tran 0 82u 0 20n",
  sp="tr tran stop=82u maxstep=20n")
+TB['A_chop']=dict(
+ add=["Iin 0 inn dc 10u"],
+ ng=""".control
+tran 5n 20u 0 5n uic
+let iout=-i(Vo)
+meas tran Iout_avg avg iout from=8u to=20u
+meas tran Vin_avg avg v(inn) from=8u to=20u
+wrdata chop_out.txt iout v(inn)
+.endc""",
+ lt=""".tran 0 20u 0 5n uic
+.meas TRAN Iout_avg AVG -I(Vo) FROM=8u TO=20u""",
+ sp="""tr tran stop=20u maxstep=5n""")

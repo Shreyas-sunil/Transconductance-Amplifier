@@ -1,0 +1,34 @@
+// A6_proposed_dem_mirror_chopped - testbench A_chop
+// Cadence Spectre, gpdk090 (nmos1v/pmos1v). Device sizes are the PTM90 design copied over;
+// re-tune bias/sizes in GPDK090 before quoting numbers (thresholds differ).
+simulator lang=spectre
+global 0
+include "/home/buet/cadence/gpdk090_v4.6/models/spectre/gpdk090.scs" section=NN
+Vdd (vdd 0) vsource dc=1
+Vcn (vcn 0) vsource dc=0.42
+Vo (out 0) vsource dc=0.5
+Ibf (vdd y) isource dc=2e-06
+M1C (y G1 x 0) nmos1v w=10u l=360n
+MA (da y 0 0) nmos1v w=10u l=360n
+Vjoin (inn x) vsource dc=0
+M2C (out G2 x2 0) nmos1v w=10u l=360n
+MB (db y 0 0) nmos1v w=10u l=360n
+Ibo (vdd out) isource dc=2e-06
+Ia1 (vdd G1) isource dc=2e-07
+Ia2 (vdd G2) isource dc=2e-07
+MA1 (a1 x 0 0) nmos1v w=8u l=360n
+MA2 (a2 x2 0 0) nmos1v w=8u l=360n
+Cc1 (G1 0) capacitor c=0.3p
+Cc2 (G2 0) capacitor c=0.3p
+Vcb (vcb 0) vsource dc=0.45
+MK1 (G1 vcb a1 0) nmos1v w=2u l=360n
+MK2 (G2 vcb a2 0) nmos1v w=2u l=360n
+Vp1 (p1 0) vsource type=pulse dc=0 val0=0 val1=1 delay=0 rise=1e-09 fall=1e-09 width=9.9900e-07 period=2.0000e-06
+Vp2 (p2 0) vsource type=pulse dc=1 val0=1 val1=0 delay=0 rise=1e-09 fall=1e-09 width=9.9900e-07 period=2.0000e-06
+MS1 (da p1 x 0) nmos1v w=4u l=0.1u
+MS2 (db p1 x2 0) nmos1v w=4u l=0.1u
+MS3 (da p2 x2 0) nmos1v w=4u l=0.1u
+MS4 (db p2 x 0) nmos1v w=4u l=0.1u
+Iin (0 inn) isource dc=10u
+simOpts options temp=27 tnom=27 reltol=1e-5 gmin=1e-15
+tr tran stop=20u maxstep=5n
