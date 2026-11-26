@@ -1,8 +1,10 @@
 # TIA redesign study (2025 base paper), PTM 90 nm and gpdk090
 
 Everything here is **simulation only**. PTM90 numbers were produced with ngspice 42 and every shipped ngspice netlist
-was re-run and matches the optimiser's numbers (`results/netlist_verification.json`). The LTspice, Spectre and Virtuoso
-files are generated from the same element lists but **have not been opened in LTspice or Cadence**, and the gpdk090
+was re-run and matches the optimiser's numbers (`results/netlist_verification.json`). All 11 circuits are also provided
+as LTspice schematics, netlists and eye-diagram netlists; I had no LTspice, so they were checked by rebuilding each one
+from the `.asc` / `.net` text and simulating it in ngspice, with agreement on all 11 (`results/ltspice_verification.json`,
+details in `netlists/ltspice/README.md`). The Spectre and Virtuoso files have **not been opened in Cadence**, and the gpdk090
 netlists carry the PTM-sized devices unchanged (see "gpdk090: what you still have to do").
 
 ## 1. The short version
@@ -117,16 +119,17 @@ Eye diagrams: `results/figures/eye.png`.
 | Folder | Contents |
 |---|---|
 | `netlists/ngspice/` | `.cir` for every design (run `ngspice -b name.cir`), plus the PRBS file and the AC / noise outputs |
-| `netlists/ltspice/` | `.net` netlists, `.asc` schematics with the two MOS symbols, `ptm90.lib`; keep them in one folder |
+| `netlists/ltspice/` | Per circuit: `.asc` schematic, `.net` netlist, `_eye.net` PRBS transient; the two MOS symbols, `ptm90.lib` and a README with run steps. Keep them in one folder |
 | `netlists/cadence_ptm/` | Spectre `.scs` with the PTM90 card (runs wherever Spectre runs, no kit needed) |
 | `netlists/cadence_gpdk/` | Spectre `.scs` with gpdk090 devices (`nmos1v`/`pmos1v`) and `build_gpdk090_schematics.il` that draws every schematic |
 | `results/` | `tables.md`, `figures/`, per-design `char_*.json`, `trim_mdfrgc_t.json`, optimiser outputs in `opt/` |
 | `papers/REFERENCES.md` | Base paper, supporting papers, links and how much of each I could read |
-| `scripts/` | `circuits.py` (all circuits), `optimize.py`, `analyze.py`, `trim.py`, `build.py`, `emit.py`, `report.py` |
+| `scripts/` | `circuits.py` (all circuits), `optimize.py`, `analyze.py`, `trim.py`, `build.py`, `emit.py`, `report.py`, `verify_ltspice.py` |
 
-**LTspice:** open a `.net` (File > Open, All files) or the `.asc`, keep `ptm90.lib` beside it, run. One analysis at a time;
-the `.tran`, `.noise` and `.step` lines are commented, remove the `;`. The `.asc` nets are joined by label.
-`prop_mdfrgc_trim` has a `.step param vcv 0 1 0.05` line for the trimming sweep.
+**LTspice:** open a `.asc` (or a `.net` via File > Open, All files), keep `ptm90.lib` and the two `.asy` symbols beside it,
+run. Eye diagrams: open the matching `_eye.net`. One analysis at a time; the `.noise` and `.step` lines are commented, remove
+the `;`. `prop_mdfrgc_trim` has the control voltage as parameter `vcv` and a `.step param vcv 0 1 0.05` line for the trimming
+sweep. If LTspice rejects `level = 54` in the model card, use `level = 14` (see `netlists/ltspice/README.md`).
 **Cadence, no kit needed:** `spectre name.scs` in `cadence_ptm/`. **Cadence with gpdk090:** next section.
 
 ## 6. gpdk090: what you still have to do
@@ -168,6 +171,7 @@ ROBUST=1 python3 optimize.py mdfrgc 30 1.5 2.5      # worst-case-sized
 python3 analyze.py mdfrgc_t                          # PVT, Monte Carlo, Cpd sweep, eye
 python3 trim.py                                      # per-condition trimming
 python3 build.py && python3 report.py                # netlists, verification, figures, tables
+python3 verify_ltspice.py                            # checks the LTspice files by simulating them in ngspice
 ```
 
 Sizes of every design are in its netlist. Search ranges are in `scripts/circuits.py` (`BOUNDS`).

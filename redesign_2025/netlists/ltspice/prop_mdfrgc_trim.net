@@ -27,8 +27,7 @@ Vc vc 0 dc {vcv}
 ;.step param vcv 0 1 0.05   ; trimming sweep: bandwidth/peaking vs control voltage
 ;.noise V(out) Iin dec 40 1Meg 100G
 ;.op
-;.tran 0 6.667e-08 6.667e-09 6.667e-12   ; eye: replace Iin by the PRBS source below
-;Ipr 0 in PWL file=prbs7_3G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)
+;Eye diagram: open the matching _eye.net file instead (transient with a PRBS7 current source).
 .meas AC zt0 FIND mag(V(out)) AT 10Meg
 .meas AC zpk MAX mag(V(out))
 .meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1

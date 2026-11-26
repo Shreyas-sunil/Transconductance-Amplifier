@@ -50,6 +50,14 @@ def main():
         else:
             t = t.replace('ac dec 40 1Meg 100G', 'ac dec 40 1Meg 100G', 1)
         open(p, 'w').write(t)
+    p = os.path.join(R, 'netlists', 'ltspice', fn + '.asc'); t = open(p).read()
+    t = re.sub(r'(SYMATTR InstName Vc\nSYMATTR Value )\S+', r'\1{vcv}', t)
+    t = t.replace('TEXT 0 ', f'TEXT 0 ', 1)
+    last = max(int(m) for m in re.findall(r'(?m)^TEXT 0 (\d+)', t))
+    t += f'\nTEXT 0 {last + 32} Left 2 !.param vcv={vc:.4g}\nTEXT 0 {last + 64} Left 2 ;.step param vcv 0 1 0.05   ; trimming sweep: bandwidth / peaking vs control voltage vc\n'
+    open(p, 'w').write(t)
+    p = os.path.join(R, 'netlists', 'ltspice', fn + '_eye.net'); t = open(p).read()
+    t = re.sub(r'(?m)^Vc vc 0 dc \S+$', f'Vc vc 0 dc {vc:.4g}', t); open(p, 'w').write(t)
     for sub in ('cadence_ptm', 'cadence_gpdk'):
         p = os.path.join(R, 'netlists', sub, fn + '.scs'); t = open(p).read()
         t = re.sub(r'(?m)^Vc \(vc 0\) vsource dc=\S+ type=dc$', 'Vc (vc 0) vsource dc=vcv type=dc', t)

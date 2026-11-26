@@ -27,8 +27,7 @@ def place(el):
 def analyses_spice(br=5e9, ltspice=False):
     ui = 1 / br
     L = ['.ac dec 40 1Meg 100G', ';.noise V(out) Iin dec 40 1Meg 100G', ';.op']
-    L += [f';.tran 0 {200*ui:.4g} {20*ui:.4g} {ui/50:.4g}   ; eye: replace Iin by the PRBS source below',
-          f';Ipr 0 in PWL file=prbs7_{br/1e9:g}G.txt   ; 20 uA pk-pk NRZ PRBS7 (prbs7_*.txt is in this folder)']
+    L += [';Eye diagram: open the matching _eye.net file instead (transient with a PRBS7 current source).']
     L += ['.meas AC zt0 FIND mag(V(out)) AT 10Meg', '.meas AC zpk MAX mag(V(out))',
           '.meas AC f3db WHEN mag(V(out))=zt0/sqrt(2) FALL=1']
     return L
@@ -51,6 +50,25 @@ def ltspice_net(name, title, el, br):
     t += lib.spice(el, ltspice=True)
     t += [''] + analyses_spice(br, True) + ['.backanno', '.end', '']
     open(os.path.join(OUT, 'ltspice', name + '.net'), 'w').write('\n'.join(t))
+
+
+def ltspice_eye(name, title, el, br):
+    """Transient eye netlist: PRBS7 current source written inline (no external file needed)."""
+    ui = 1 / br
+    _, pts = prbs7_file(br)
+    el2 = [e for e in el if e[1] != 'Iin']
+    t = [f'* {title} - EYE (3 Gb/s NRZ PRBS7, 20 uA pk-pk photocurrent)', '* LTspice: File > Open (All files) > this .net > Run, then plot V(out).',
+         '* LTspice has no eye-diagram view. To fold the trace, right-click the x-axis and enter the expression mod(time,333.33p)',
+         '* (or File > Export data as text and fold it elsewhere).',
+         '.include ptm90.lib', '.temp 35', '']
+    t += lib.spice(el2, ltspice=True)
+    pw = [f'{a:.6g} {b:.6g}' for a, b in pts]
+    t.append('Ipr 0 in PWL(' + pw[0])
+    for i in range(1, len(pw), 6):
+        t.append('+ ' + ' '.join(pw[i:i + 6]))
+    t[-1] += ')'
+    t += ['', f'.tran 0 {254 * ui:.5g} 0 {ui / 40:.4g}', '.backanno', '.end', '']
+    open(os.path.join(OUT, 'ltspice', name + '_eye.net'), 'w').write('\n'.join(t))
 
 
 def asc_items(el):
@@ -188,10 +206,7 @@ def emit(designs, br=5e9):
         shutil.copy(lib.MODEL, os.path.join(OUT, d, 'ptm90.lib'))
     open(os.path.join(OUT, 'ltspice', 'tia_nmos4.asy'), 'w').write(open(os.path.join(HERE, 'ASY_N.txt')).read())
     open(os.path.join(OUT, 'ltspice', 'tia_pmos4.asy'), 'w').write(open(os.path.join(HERE, 'ASY_P.txt')).read())
-    _, pts = prbs7_file(br)
-    for d in ('ngspice', 'ltspice'):
-        open(os.path.join(OUT, d, f'prbs7_{br/1e9:g}G.txt'), 'w').write('\n'.join(f'{t:.6g} {v:.6g}' for t, v in pts) + '\n')
     for name, (title, el) in designs.items():
-        ngspice_file(name, title, el, br); ltspice_net(name, title, el, br); ltspice_asc(name, title, el, br)
+        ngspice_file(name, title, el, br); ltspice_net(name, title, el, br); ltspice_asc(name, title, el, br); ltspice_eye(name, title, el, br)
         spectre_file(name, title, el, 'ptm'); spectre_file(name, title, el, 'gpdk')
     skill(designs)
