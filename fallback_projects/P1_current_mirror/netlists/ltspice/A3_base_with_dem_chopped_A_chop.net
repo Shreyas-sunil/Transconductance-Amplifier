@@ -1,0 +1,33 @@
+* A3_base_with_dem_chopped, testbench A_chop
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Chopped (DEM) transient, 500 kHz clock: the averaged output current is the result; plot -I(Vo).
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 0.5
+Ibf vdd y 2e-06
+M1C y G1 x 0 nmos90 W=40u L=360n
+MA da y 0 0 nmos90 W=10u L=360n
+Vjoin inn x 0
+M2C out G2 x2 0 nmos90 W=40u L=360n
+MB db y 0 0 nmos90 W=10u L=360n
+Ibo vdd out 2e-06
+Ia1 vdd G1 2e-07
+Ia2 vdd G2 2e-07
+MA1 G1 x 0 0 nmos90 W=2u L=360n
+MA2 G2 x2 0 0 nmos90 W=2u L=360n
+Cc1 G1 0 0.3p
+Cc2 G2 0 0.3p
+Vp1 p1 0 PULSE(0 1 0 1e-09 1e-09 9.9900e-07 2.0000e-06)
+Vp2 p2 0 PULSE(1 0 0 1e-09 1e-09 9.9900e-07 2.0000e-06)
+MS1 da p1 x 0 nmos90 W=4u L=0.1u
+MS2 db p1 x2 0 nmos90 W=4u L=0.1u
+MS3 da p2 x2 0 nmos90 W=4u L=0.1u
+MS4 db p2 x 0 nmos90 W=4u L=0.1u
+Iin 0 inn 10u
+.tran 0 20u 0 5n uic
+.meas TRAN iout_avg AVG -I(Vo) FROM=8u TO=20u
+.meas TRAN err_avg_pct PARAM 100*(iout_avg-10u)/10u
+.meas TRAN vin_avg AVG V(inn) FROM=8u TO=20u
+.backanno
+.end

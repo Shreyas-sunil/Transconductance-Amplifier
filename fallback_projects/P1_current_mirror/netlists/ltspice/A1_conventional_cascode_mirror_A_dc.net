@@ -1,0 +1,21 @@
+* A1_conventional_cascode_mirror, testbench A_dc
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* DC transfer: plot -I(Vo) and V(inn) against Iin; error in %% = 100*(-I(Vo)-Iin)/Iin.
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 0.5
+M1C y vcn x 0 nmos90 W=10u L=360n
+M1 x y 0 0 nmos90 W=10u L=360n
+M2C out vcn x2 0 nmos90 W=10u L=360n
+M2 x2 y 0 0 nmos90 W=10u L=360n
+Vjoin inn y 0
+Iin 0 inn 10u AC 1
+.dc Iin 0 20u 0.25u
+.meas DC iout_10u FIND -I(Vo) AT=10u
+.meas DC err_10u_pct PARAM 100*(iout_10u-10u)/10u
+.meas DC vin_10u FIND V(inn) AT=10u
+.meas DC iout_2u FIND -I(Vo) AT=2u
+.meas DC err_2u_pct PARAM 100*(iout_2u-2u)/2u
+.backanno
+.end

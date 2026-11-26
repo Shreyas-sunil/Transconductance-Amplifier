@@ -1,0 +1,32 @@
+* A5_enhanced_core_cascoded_boosters, testbench A_dc
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* DC transfer: plot -I(Vo) and V(inn) against Iin; error in %% = 100*(-I(Vo)-Iin)/Iin.
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 0.5
+Ibf vdd y 2e-06
+M1C y G1 x 0 nmos90 W=10u L=360n
+M1 x y 0 0 nmos90 W=10u L=360n
+Vjoin inn x 0
+M2C out G2 x2 0 nmos90 W=10u L=360n
+M2 x2 y 0 0 nmos90 W=10u L=360n
+Ibo vdd out 2e-06
+Ia1 vdd G1 2e-07
+Ia2 vdd G2 2e-07
+MA1 a1 x 0 0 nmos90 W=8u L=360n
+MA2 a2 x2 0 0 nmos90 W=8u L=360n
+Cc1 G1 0 0.3p
+Cc2 G2 0 0.3p
+Vcb vcb 0 0.45
+MK1 G1 vcb a1 0 nmos90 W=2u L=360n
+MK2 G2 vcb a2 0 nmos90 W=2u L=360n
+Iin 0 inn 10u AC 1
+.dc Iin 0 20u 0.25u
+.meas DC iout_10u FIND -I(Vo) AT=10u
+.meas DC err_10u_pct PARAM 100*(iout_10u-10u)/10u
+.meas DC vin_10u FIND V(inn) AT=10u
+.meas DC iout_2u FIND -I(Vo) AT=2u
+.meas DC err_2u_pct PARAM 100*(iout_2u-2u)/2u
+.backanno
+.end

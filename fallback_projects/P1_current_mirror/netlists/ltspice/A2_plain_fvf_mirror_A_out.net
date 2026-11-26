@@ -1,0 +1,23 @@
+* A2_plain_fvf_mirror, testbench A_out
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Output characteristic at Iin = 10 uA: plot -I(Vo) against Vo. Rout from the slope at 0.5 V (for a cleaner number use .ac on Vo).
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 0.5
+Ibf vdd y 2e-06
+M1C y G1 x 0 nmos90 W=40u L=360n
+M1 x y 0 0 nmos90 W=10u L=360n
+Vjoin inn x 0
+M2C out G2 x2 0 nmos90 W=40u L=360n
+M2 x2 y 0 0 nmos90 W=10u L=360n
+Ibo vdd out 2e-06
+Vg1 G1 0 0.42
+Vg2 G2 0 0.42
+Iin 0 inn 10u AC 1
+.dc Vo 0 1 5m
+.meas DC iout_0p5 FIND -I(Vo) AT=0.5
+.meas DC gout DERIV I(Vo) AT=0.5
+.meas DC rout_ohm PARAM 1/abs(gout)
+.backanno
+.end

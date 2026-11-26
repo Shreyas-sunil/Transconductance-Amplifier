@@ -1,0 +1,40 @@
+* C3_proposed_dyn_qfg_W0p5, testbench C_tr
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Unity-gain follower, 0.1 -> 0.5 V step, CL = 150 pF. Slew = 20-80 % slope of V(out).
+.include ptm90.lib
+Vdd vdd 0 0.6
+R1 vdd ag 300k
+R2 ag 0 300k
+Ib vb1 0 180n
+MB1 vb1 vb1 vdd ag pmos90 W=3u L=180n m=2
+M1 n1 vb1 vdd inp pmos90 W=3u L=180n m=2
+M2 n2 vb1 vdd inn pmos90 W=3u L=180n m=2
+M3 n1 n1 0 0 nmos90 W=6u L=180n
+M5 n2 n2 0 0 nmos90 W=6u L=180n
+M7 n1 n2 0 0 nmos90 W=5u L=180n
+M8 n2 n1 0 0 nmos90 W=5u L=180n
+M4 n3 n1 0 0 nmos90 W=6u L=180n m=15
+M6 x n2 0 0 nmos90 W=6u L=180n m=15
+M9 n3 n3 vdd vdd pmos90 W=6u L=180n m=4
+M10 x n3 vdd vdd pmos90 W=6u L=180n m=4
+M11 out x 0 0 nmos90 W=6u L=180n m=8
+Ib3 g12b 0 180n
+MB3 g12b g12b vdd vdd pmos90 W=6u L=180n
+Rbatt g12b g12 1Meg
+Cbatt x g12 800f
+M12 out g12 vdd vdd pmos90 W=6u L=180n m=15
+Cc out cm1 500f
+Rc cm1 n1 100k
+Cl out 0 150p
+Mpd g12 n3 x 0 nmos90 W=0.5u L=0.18u
+Vin inp 0 PULSE(0.1 0.5 2u 10n 10n 40u 80u)
+Vsh inn out 0
+.tran 0 82u 0 20n
+.meas TRAN t_r20 WHEN V(out)=0.18 RISE=1
+.meas TRAN t_r80 WHEN V(out)=0.42 RISE=1
+.meas TRAN sr_rise_V_per_us PARAM 0.24/(t_r80-t_r20)/1e6
+.meas TRAN t_f80 WHEN V(out)=0.42 FALL=1
+.meas TRAN t_f20 WHEN V(out)=0.18 FALL=1
+.meas TRAN sr_fall_V_per_us PARAM -0.24/(t_f20-t_f80)/1e6
+.backanno
+.end

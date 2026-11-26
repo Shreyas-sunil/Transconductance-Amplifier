@@ -1,0 +1,30 @@
+* A5_enhanced_core_cascoded_boosters, testbench A_out
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Output characteristic at Iin = 10 uA: plot -I(Vo) against Vo. Rout from the slope at 0.5 V (for a cleaner number use .ac on Vo).
+.include ptm90.lib
+Vdd vdd 0 1
+Vcn vcn 0 0.42
+Vo out 0 0.5
+Ibf vdd y 2e-06
+M1C y G1 x 0 nmos90 W=10u L=360n
+M1 x y 0 0 nmos90 W=10u L=360n
+Vjoin inn x 0
+M2C out G2 x2 0 nmos90 W=10u L=360n
+M2 x2 y 0 0 nmos90 W=10u L=360n
+Ibo vdd out 2e-06
+Ia1 vdd G1 2e-07
+Ia2 vdd G2 2e-07
+MA1 a1 x 0 0 nmos90 W=8u L=360n
+MA2 a2 x2 0 0 nmos90 W=8u L=360n
+Cc1 G1 0 0.3p
+Cc2 G2 0 0.3p
+Vcb vcb 0 0.45
+MK1 G1 vcb a1 0 nmos90 W=2u L=360n
+MK2 G2 vcb a2 0 nmos90 W=2u L=360n
+Iin 0 inn 10u AC 1
+.dc Vo 0 1 5m
+.meas DC iout_0p5 FIND -I(Vo) AT=0.5
+.meas DC gout DERIV I(Vo) AT=0.5
+.meas DC rout_ohm PARAM 1/abs(gout)
+.backanno
+.end

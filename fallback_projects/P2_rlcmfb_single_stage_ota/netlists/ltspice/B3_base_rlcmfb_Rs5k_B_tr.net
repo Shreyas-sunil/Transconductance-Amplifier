@@ -1,0 +1,33 @@
+* B3_base_rlcmfb_Rs5k, testbench B_tr
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Unity-gain follower, +/-0.2 V step, CL = 2 pF behind Rs. Slew = 20-80 % slope of V(oL) (the load capacitor).
+.include ptm90.lib
+Vdd vdd 0 0.45
+Vss vss 0 -0.45
+Ib vdd nb 2.5u
+Mb nb nb vss vss nmos90 W=10u L=180n
+M0 t nb vss vss nmos90 W=20u L=180n
+M1 a inn t vss nmos90 W=10u L=180n
+M2 b inp t vss nmos90 W=10u L=180n
+M3 a cm vdd vdd pmos90 W=10u L=180n
+M4 b cm vdd vdd pmos90 W=10u L=180n
+Ra a cm 300k
+Rb b cm 300k
+M3P out b vdd vdd pmos90 W=10u L=180n
+M4P c a vdd vdd pmos90 W=10u L=180n
+M5 c c vss vss nmos90 W=10u L=180n
+M6 out c vss vss nmos90 W=10u L=180n
+Rs out o2 5k
+Vml o2 oL 0
+Cl oL 0 2p
+Vin inp 0 PULSE(-0.2 0.2 20n 1n 1n 399n 800n)
+Vsh inn out 0
+.tran 0 900n 0 0.2n
+.meas TRAN t_r20 WHEN V(oL)=-0.12 RISE=1
+.meas TRAN t_r80 WHEN V(oL)=0.12 RISE=1
+.meas TRAN sr_rise_V_per_us PARAM 0.24/(t_r80-t_r20)/1e6
+.meas TRAN t_f80 WHEN V(oL)=0.12 FALL=1
+.meas TRAN t_f20 WHEN V(oL)=-0.12 FALL=1
+.meas TRAN sr_fall_V_per_us PARAM -0.24/(t_f20-t_f80)/1e6
+.backanno
+.end

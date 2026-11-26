@@ -1,0 +1,38 @@
+* C3_proposed_dyn_qfg_W0p5, testbench C_ac
+* LTspice netlist (PTM 90 nm). Open in LTspice (File > Open, all files) and Run.
+* Open loop (RF = 1 GOhm, CF = 10 F set the DC point, inputs at 0.3 V). Phase margin = 180 + phase of v_at_ugf.
+.include ptm90.lib
+Vdd vdd 0 0.6
+R1 vdd ag 300k
+R2 ag 0 300k
+Ib vb1 0 180n
+MB1 vb1 vb1 vdd ag pmos90 W=3u L=180n m=2
+M1 n1 vb1 vdd inp pmos90 W=3u L=180n m=2
+M2 n2 vb1 vdd inn pmos90 W=3u L=180n m=2
+M3 n1 n1 0 0 nmos90 W=6u L=180n
+M5 n2 n2 0 0 nmos90 W=6u L=180n
+M7 n1 n2 0 0 nmos90 W=5u L=180n
+M8 n2 n1 0 0 nmos90 W=5u L=180n
+M4 n3 n1 0 0 nmos90 W=6u L=180n m=15
+M6 x n2 0 0 nmos90 W=6u L=180n m=15
+M9 n3 n3 vdd vdd pmos90 W=6u L=180n m=4
+M10 x n3 vdd vdd pmos90 W=6u L=180n m=4
+M11 out x 0 0 nmos90 W=6u L=180n m=8
+Ib3 g12b 0 180n
+MB3 g12b g12b vdd vdd pmos90 W=6u L=180n
+Rbatt g12b g12 1Meg
+Cbatt x g12 800f
+M12 out g12 vdd vdd pmos90 W=6u L=180n m=15
+Cc out cm1 500f
+Rc cm1 n1 100k
+Cl out 0 150p
+Mpd g12 n3 x 0 nmos90 W=0.5u L=0.18u
+Rf out inn 1G
+Cf inn 0 10
+Vin inp 0 0.3 AC 1
+.ac dec 40 0.1 100Meg
+.meas AC a0 FIND mag(V(out)) AT=1
+.meas AC ugf WHEN mag(V(out))=1
+.meas AC v_at_ugf FIND V(out) AT=ugf
+.backanno
+.end
